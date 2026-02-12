@@ -69,20 +69,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-function openVideoModal(videoId) {
-    // Reset Modal State
-    elements.modalVideoContainer.classList.remove('hidden');
-    elements.modalCommentsContainer.classList.add('hidden');
 
-    // Set Video Src with Origin to fix error 153
-    const origin = window.location.origin;
-    elements.modalIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&origin=${origin}`;
-
-    // Set Fallback Link
-    elements.externalLinkBtn.href = `https://www.youtube.com/watch?v=${videoId}`;
-
-    elements.modal.classList.remove('hidden');
-}
 
 async function openCommentModal(videoId) {
     // Reset Modal State
@@ -369,6 +356,7 @@ function renderVideoList(videos) {
         const snippet = video.snippet;
         const stats = video.statistics;
         const thumbnail = snippet.thumbnails.default?.url;
+        const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
 
         const tr = document.createElement('tr');
 
@@ -377,8 +365,8 @@ function renderVideoList(videos) {
 
         tr.innerHTML = `
             <td>${index + 1}</td>
-            <td><img src="${thumbnail}" class="video-thumbnail-small" onclick="openVideoModal('${video.id}')" alt="thumb"></td>
-            <td class="title-cell"><span class="video-title-link" onclick="openVideoModal('${video.id}')">${snippet.title}</span></td>
+            <td><a href="${videoUrl}" target="_blank"><img src="${thumbnail}" class="video-thumbnail-small" alt="thumb"></a></td>
+            <td class="title-cell"><a href="${videoUrl}" target="_blank" class="video-title-link">${snippet.title}</a></td>
             <td>${new Date(snippet.publishedAt).toLocaleDateString()}</td>
             <td>${formatNumber(stats.viewCount || 0)}</td>
             <td>${formatNumber(stats.likeCount || 0)}</td>
