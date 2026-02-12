@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Channel Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-inner">
+                <div class="logo">
+                    <i data-lucide="bar-chart-2" class="brand-icon"></i>
+                    <h1>YT Analyzer</h1>
+                </div>
+                <div class="input-group api-key-group">
+                    <input type="password" id="api-key-input" placeholder="YouTube Data API Key 입력" />
+                    <button id="save-api-key" class="btn btn-secondary">저장</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Section -->
+            <section class="search-section">
+                <div class="search-bar-wrapper">
+                    <input type="text" id="channel-url-input"
+                        placeholder="분석할 유튜브 채널 URL을 입력하세요 (예: https://www.youtube.com/@GoogleDevelopers)" />
+                    <button id="analyze-btn" class="btn btn-primary">검색</button>
+                </div>
+                <div id="error-message" class="error-message hidden"></div>
+            </section>
+
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="loading-indicator hidden">
+                <div class="spinner"></div>
+                <p id="loading-text">데이터 분석 중...</p>
+            </div>
+
+            <!-- Results Section -->
+            <section id="results-section" class="results-section hidden">
+                <!-- Channel Context -->
+                <div class="channel-context">
+                    <div class="channel-profile">
+                        <img id="channel-thumbnail" src="" alt="Profile" />
+                        <div>
+                            <h2 id="channel-title">Channel Name</h2>
+                            <p id="channel-description">Channel Description</p>
+                        </div>
+                    </div>
+                    <div class="channel-summary-pill">
+                        <div class="stat-pill">
+                            <span class="label">일 평균 업로드</span>
+                            <span class="value" id="daily-upload-avg">-</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="stat-pill">
+                            <span class="label">총 조회수</span>
+                            <span class="value" id="view-count">-</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="stat-pill">
+                            <button id="export-btn" class="btn-text">
+                                <i data-lucide="download"></i> 엑셀 저장
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Area -->
+                <div class="charts-area">
+                    <div class="chart-container">
+                        <h3>📅 일별 업로드 추이</h3>
+                        <canvas id="uploadChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Video List Table -->
+                <div class="video-list-container">
+                    <table class="video-table">
+                        <thead>
+                            <tr>
+                                <th width="60">No.</th>
+                                <th width="120">썸네일</th>
+                                <th>영상 제목</th>
+                                <th width="120">업로드일</th>
+                                <th width="100">조회수</th>
+                                <th width="100">좋아요</th>
+                                <th width="80">댓글</th>
+                            </tr>
+                        </thead>
+                        <tbody id="video-table-body">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="video-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="video-frame-container">
+                <iframe id="video-iframe" width="100%" height="100%" src="" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
