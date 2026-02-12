@@ -237,6 +237,75 @@ input:focus {
     text-align: center;
 }
 
+.video-table th.sortable {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.video-table th.sortable:hover {
+    background-color: var(--border-color);
+}
+
+.video-table th.sortable .sort-icon {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-left: 4px;
+    stroke-width: 2.5px;
+    color: var(--text-light);
+}
+
+.video-table th.sortable.active .sort-icon {
+    color: var(--accent-color);
+}
+
+/* Chart Header & Nav */
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chart-header h3 {
+    margin-bottom: 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    border-left: 3px solid var(--accent-color);
+    padding-left: 0.5rem;
+}
+
+.chart-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.btn-icon {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.25rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: var(--bg-hover);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-icon i {
+    width: 16px;
+    height: 16px;
+}
+
 .video-table td {
     padding: 0.5rem;
     border-bottom: 1px solid var(--border-light);
@@ -392,7 +461,80 @@ input:focus {
     padding: 4rem;
 }
 
-.error-message {
+
+
+/* Favorites */
+.btn-icon-subtle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.btn-icon-subtle:hover {
+    color: #f1c40f;
+    /* Yellow for star */
+}
+
+.btn-icon-subtle.active {
+    color: #f1c40f;
+    fill: #f1c40f;
+}
+
+.btn-icon-subtle.active svg {
+    fill: #f1c40f;
+}
+
+.favorites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.favorite-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background-color: var(--bg-hover);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.favorite-item:hover {
+    background-color: var(--border-color);
+}
+
+.favorite-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.favorite-info img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.favorite-info span {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.delete-fav-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.delete-fav-btn:hover {
     color: #e53e3e;
-    margin-top: 1rem;
 }

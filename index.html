@@ -39,6 +39,10 @@
                     <input type="text" id="channel-url-input"
                         placeholder="분석할 유튜브 채널 URL을 입력하세요 (예: https://www.youtube.com/@GoogleDevelopers)" />
                     <button id="analyze-btn" class="btn btn-primary">검색</button>
+                    <button id="favorites-list-btn" class="btn btn-secondary" style="margin-left: 0.5rem;"
+                        title="즐겨찾기 목록">
+                        <i data-lucide="star"></i>
+                    </button>
                 </div>
                 <div id="error-message" class="error-message hidden"></div>
             </section>
@@ -56,7 +60,12 @@
                     <div class="channel-profile">
                         <img id="channel-thumbnail" src="" alt="Profile" />
                         <div>
-                            <h2 id="channel-title">Channel Name</h2>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <h2 id="channel-title">Channel Name</h2>
+                                <button id="toggle-favorite-btn" class="btn-icon-subtle" title="즐겨찾기 추가/해제">
+                                    <i data-lucide="star"></i>
+                                </button>
+                            </div>
                             <p id="channel-description">Channel Description</p>
                         </div>
                     </div>
@@ -82,7 +91,14 @@
                 <!-- Charts Area -->
                 <div class="charts-area">
                     <div class="chart-container">
-                        <h3>📅 일별 업로드 추이</h3>
+                        <div class="chart-header">
+                            <h3>📅 일별 업로드 추이</h3>
+                            <div class="chart-nav">
+                                <button id="chart-prev" class="btn-icon"><i data-lucide="chevron-left"></i></button>
+                                <span id="chart-range-label">최근 30일</span>
+                                <button id="chart-next" class="btn-icon"><i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
                         <canvas id="uploadChart"></canvas>
                     </div>
                 </div>
@@ -95,10 +111,14 @@
                                 <th width="60">No.</th>
                                 <th width="80">썸네일</th>
                                 <th>영상 제목</th>
-                                <th width="120">업로드일</th>
-                                <th width="100">조회수</th>
-                                <th width="100">좋아요</th>
-                                <th width="80">댓글</th>
+                                <th width="120" class="sortable" data-sort="date">업로드일 <i data-lucide="arrow-up-down"
+                                        class="sort-icon"></i></th>
+                                <th width="100" class="sortable" data-sort="views">조회수 <i data-lucide="arrow-up-down"
+                                        class="sort-icon"></i></th>
+                                <th width="100" class="sortable" data-sort="likes">좋아요 <i data-lucide="arrow-up-down"
+                                        class="sort-icon"></i></th>
+                                <th width="80" class="sortable" data-sort="comments">댓글 <i data-lucide="arrow-up-down"
+                                        class="sort-icon"></i></th>
                             </tr>
                         </thead>
                         <tbody id="video-table-body">
@@ -129,11 +149,18 @@
                 </div>
             </div>
 
-            <!-- Comments Container -->
             <div id="modal-comments-container" class="modal-body hidden">
                 <h3>💬 댓글 목록</h3>
                 <div id="comments-list" class="comments-list">
                     <!-- Comments injected here -->
+                </div>
+            </div>
+
+            <!-- Favorites Container -->
+            <div id="modal-favorites-container" class="modal-body hidden">
+                <h3>⭐ 즐겨찾기 목록</h3>
+                <div id="favorites-list" class="favorites-list">
+                    <!-- Favorites injected here -->
                 </div>
             </div>
         </div>

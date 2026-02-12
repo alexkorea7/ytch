@@ -3,7 +3,12 @@ const state = {
     channelId: null,
     videos: [],
     isLoading: false,
-    uploadChart: null
+    uploadChart: null,
+    // New State for Sorting & Chart Nav
+    sortColumn: 'date',
+    sortOrder: 'desc',
+    chartPage: 0,
+    favorites: []
 };
 
 const elements = {
@@ -34,47 +39,232 @@ const elements = {
     commentsList: document.getElementById('comments-list')
 };
 
-// --- Initialization ---
-if (state.apiKey) {
-    elements.apiKeyInput.value = state.apiKey;
-}
+// Table Sorting Listeners
+// Moved to init()
 
-// --- Event Listeners ---
-elements.saveKeyBtn.addEventListener('click', () => {
-    const key = elements.apiKeyInput.value.trim();
-    if (key) {
-        state.apiKey = key;
-        localStorage.setItem('yt_api_key', key);
-        alert('API Key가 저장되었습니다.');
-    } else {
-        alert('API Key를 입력해주세요.');
-    }
-});
-
-elements.analyzeBtn.addEventListener('click', handleAnalyze);
-elements.urlInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleAnalyze();
-});
-
-elements.exportBtn.addEventListener('click', exportToExcel);
+// Chart Navigation Listeners
+// Moved to init()
 
 // Modal Logic
-elements.closeModal.addEventListener('click', closeModal);
-elements.modal.addEventListener('click', (e) => {
-    if (e.target === elements.modal) closeModal();
+// Moved to init()
+
+document.addEventListener('DOMContentLoaded', () => {
+    init();
 });
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !elements.modal.classList.contains('hidden')) {
-        closeModal();
+
+function init() {
+    // Restore API Key
+    if (state.apiKey) {
+        elements.apiKeyInput.value = state.apiKey;
     }
-});
 
+    // Restore Favorites
+    loadFavoritesState();
 
+    // Event Listeners
+    if (elements.saveKeyBtn) {
+        elements.saveKeyBtn.addEventListener('click', () => {
+            const key = elements.apiKeyInput.value.trim();
+            if (key) {
+                state.apiKey = key;
+                localStorage.setItem('yt_api_key', key);
+                alert('API Key가 저장되었습니다.');
+            } else {
+                alert('API Key를 입력해주세요.');
+            }
+        });
+    }
+
+    if (elements.analyzeBtn) {
+        elements.analyzeBtn.addEventListener('click', handleAnalyze);
+    }
+
+    if (elements.urlInput) {
+        elements.urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAnalyze();
+        });
+    }
+
+    if (elements.exportBtn) {
+        elements.exportBtn.addEventListener('click', exportToExcel);
+    }
+
+    // Sorting
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const column = th.dataset.sort;
+            handleSort(column);
+        });
+    });
+
+    // Chart Nav
+    const prevBtn = document.getElementById('chart-prev');
+    const nextBtn = document.getElementById('chart-next');
+    if (prevBtn && nextBtn) {
+        prevBtn.addEventListener('click', () => {
+            state.chartPage++;
+            renderCharts(state.videos);
+        });
+        nextBtn.addEventListener('click', () => {
+            if (state.chartPage > 0) {
+                state.chartPage--;
+                renderCharts(state.videos);
+            }
+        });
+    }
+
+    // Modal
+    if (elements.closeModal) elements.closeModal.addEventListener('click', closeModal);
+    if (elements.modal) {
+        elements.modal.addEventListener('click', (e) => {
+            if (e.target === elements.modal) closeModal();
+        });
+    }
+
+    // Favorites
+    const favListBtn = document.getElementById('favorites-list-btn');
+    const toggleFavBtn = document.getElementById('toggle-favorite-btn');
+
+    if (favListBtn) {
+        favListBtn.addEventListener('click', openFavoritesModal);
+    }
+
+    if (toggleFavBtn) {
+        toggleFavBtn.addEventListener('click', toggleFavorite);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (elements.modal && e.key === 'Escape' && !elements.modal.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+
+    lucide.createIcons();
+}
+
+function loadFavoritesState() {
+    try {
+        const saved = localStorage.getItem('yt_favorites');
+        if (saved) {
+            state.favorites = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Failed to load favorites', e);
+        state.favorites = [];
+    }
+}
+
+// Favorites Logic
+function toggleFavorite() {
+    if (!state.channelId) return;
+
+    const idx = state.favorites.findIndex(f => f.id === state.channelId);
+    if (idx >= 0) {
+        // Remove
+        state.favorites.splice(idx, 1);
+        alert('즐겨찾기에서 제거되었습니다.');
+    } else {
+        // Add
+        const currentTitle = elements.channelTitle.textContent;
+        const currentThumb = elements.channelThumb.src;
+        state.favorites.push({
+            id: state.channelId,
+            title: currentTitle,
+            thumbnail: currentThumb
+        });
+        alert('즐겨찾기에 추가되었습니다.');
+    }
+
+    localStorage.setItem('yt_favorites', JSON.stringify(state.favorites));
+    updateFavoriteBtnState();
+}
+
+function updateFavoriteBtnState() {
+    const btn = document.getElementById('toggle-favorite-btn');
+    if (!btn) return;
+    const icon = btn.querySelector('svg') || btn.querySelector('i');
+
+    if (!state.channelId) return;
+
+    const isFav = state.favorites.some(f => f.id === state.channelId);
+
+    if (isFav) {
+        btn.classList.add('active');
+        if (icon) {
+            icon.setAttribute('fill', '#f1c40f');
+            icon.style.fill = '#f1c40f';
+        }
+    } else {
+        btn.classList.remove('active');
+        if (icon) {
+            icon.setAttribute('fill', 'none');
+            icon.style.fill = 'none';
+        }
+    }
+}
+
+function openFavoritesModal() {
+    const vidContainer = document.getElementById('modal-video-container');
+    const comContainer = document.getElementById('modal-comments-container');
+    if (vidContainer) vidContainer.classList.add('hidden');
+    if (comContainer) comContainer.classList.add('hidden');
+
+    const favContainer = document.getElementById('modal-favorites-container');
+    if (favContainer) favContainer.classList.remove('hidden');
+
+    const list = document.getElementById('favorites-list');
+    if (list) {
+        list.innerHTML = '';
+
+        if (state.favorites.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:#999;">저장된 채널이 없습니다.</p>';
+        } else {
+            state.favorites.forEach(fav => {
+                const item = document.createElement('div');
+                item.className = 'favorite-item';
+                item.innerHTML = `
+                    <div class="favorite-info" onclick="loadFavoriteFromModal('${fav.id}')">
+                        <img src="${fav.thumbnail}" alt="thumb">
+                        <span>${fav.title}</span>
+                    </div>
+                    <button class="delete-fav-btn" onclick="removeFavorite(event, '${fav.id}')">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+    }
+
+    if (elements.modal) elements.modal.classList.remove('hidden');
+}
+
+window.removeFavorite = function (e, id) {
+    e.stopPropagation();
+    const idx = state.favorites.findIndex(f => f.id === id);
+    if (idx >= 0) {
+        state.favorites.splice(idx, 1);
+        localStorage.setItem('yt_favorites', JSON.stringify(state.favorites));
+        openFavoritesModal();
+        if (state.channelId === id) updateFavoriteBtnState();
+    }
+};
+
+window.loadFavoriteFromModal = function (id) {
+    closeModal();
+    // Assuming resolveChannelId handles full ID if we construct URL
+    elements.urlInput.value = `https://www.youtube.com/channel/${id}`;
+    handleAnalyze();
+};
 
 async function openCommentModal(videoId) {
     // Reset Modal State
     elements.modalVideoContainer.classList.add('hidden');
     elements.modalCommentsContainer.classList.remove('hidden');
+    const favContainer = document.getElementById('modal-favorites-container');
+    if (favContainer) favContainer.classList.add('hidden');
+
     elements.commentsList.innerHTML = '<div class="spinner"></div><p style="text-align:center">댓글을 불러오는 중...</p>';
 
     elements.modal.classList.remove('hidden');
@@ -90,6 +280,8 @@ async function openCommentModal(videoId) {
 function closeModal() {
     elements.modalIframe.src = '';
     elements.modal.classList.add('hidden');
+    const favContainer = document.getElementById('modal-favorites-container');
+    if (favContainer) favContainer.classList.add('hidden');
 }
 
 // --- Core Logic ---
@@ -129,13 +321,15 @@ async function handleAnalyze() {
         setLoading(true, `${videoIds.length}개의 동영상 통계를 분석 중...`);
         const videos = await fetchVideoDetails(videoIds);
 
-        // Date sort desc
-        videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
+        // Save to state
         state.videos = videos;
 
+        // Render Profile
         renderChannelInfo(channelData, videos);
         renderCharts(videos);
-        renderVideoList(videos);
+
+        // Initial Sort (Date Desc)
+        handleSort('date', 'desc');
 
         elements.resultsSection.classList.remove('hidden');
 
@@ -145,6 +339,63 @@ async function handleAnalyze() {
     } finally {
         setLoading(false);
     }
+}
+
+function handleSort(column, forceOrder = null) {
+    if (forceOrder) {
+        state.sortOrder = forceOrder;
+    } else {
+        if (state.sortColumn === column) {
+            state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            state.sortOrder = 'desc'; // Default to desc for new column
+        }
+    }
+    state.sortColumn = column;
+
+    // Update UI Icons
+    document.querySelectorAll('.sortable').forEach(th => {
+        th.classList.remove('active');
+        const icon = th.querySelector('.sort-icon');
+        icon.setAttribute('data-lucide', 'arrow-up-down'); // Reset
+        if (th.dataset.sort === column) {
+            th.classList.add('active');
+            icon.setAttribute('data-lucide', state.sortOrder === 'asc' ? 'arrow-up' : 'arrow-down');
+        }
+    });
+    lucide.createIcons();
+
+    // Sort Data
+    state.videos.sort((a, b) => {
+        let valA, valB;
+
+        switch (column) {
+            case 'date':
+                valA = new Date(a.snippet.publishedAt);
+                valB = new Date(b.snippet.publishedAt);
+                break;
+            case 'views':
+                valA = safeParseInt(a.statistics.viewCount);
+                valB = safeParseInt(b.statistics.viewCount);
+                break;
+            case 'likes':
+                valA = safeParseInt(a.statistics.likeCount);
+                valB = safeParseInt(b.statistics.likeCount);
+                break;
+            case 'comments':
+                valA = safeParseInt(a.statistics.commentCount);
+                valB = safeParseInt(b.statistics.commentCount);
+                break;
+            default:
+                return 0;
+        }
+
+        if (valA < valB) return state.sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return state.sortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    renderVideoList(state.videos);
 }
 
 // --- API Functions ---
@@ -283,26 +534,64 @@ function processDailyStats(videos) {
 
 function renderCharts(videos) {
     const dailyStats = processDailyStats(videos);
-    const recentStats = dailyStats.slice(-30);
-    const checkBgColor = '#03c75a';
 
-    const ctx = document.getElementById('uploadChart').getContext('2d');
+    // Simplification: Always show latest 30 active days (or less if not enough data)
+    // The stats are already sorted by date ASC
+    const pageData = dailyStats.slice(-30);
+
+    // Update Label and Buttons - Hide nav as requested for simplicity "like before"
+    const rangeLabel = document.getElementById('chart-range-label');
+    const navDiv = document.querySelector('.chart-nav');
+    if (navDiv) navDiv.style.display = 'none'; // Hide nav controls for now to simplify
+
+    if (rangeLabel && pageData.length > 0) {
+        const startStr = pageData[0].date;
+        const endStr = pageData[pageData.length - 1].date;
+        rangeLabel.textContent = `${startStr} ~ ${endStr} (최근 30일)`;
+    }
+
+    const ctx = document.getElementById('uploadChart');
+    if (!ctx) return;
+
+    if (state.uploadChart) {
+        state.uploadChart.destroy();
+    }
+
+    // Colors: Pink > 500k, Purple > 1M
+    let hasMillionViews = false;
+    const backgroundColors = pageData.map(d => {
+        if (d.views >= 1000000) {
+            hasMillionViews = true;
+            return '#9b59b6'; // Purple
+        }
+        if (d.views >= 500000) return '#ff69b4'; // Pink
+        return '#03c75a'; // Green
+    });
+
+    const borderColors = pageData.map(d => {
+        if (d.views >= 1000000) return '#8e44ad';
+        if (d.views >= 500000) return '#ff1493';
+        return '#02b351';
+    });
 
     state.uploadChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: recentStats.map(d => d.date),
+            labels: pageData.map(d => d.date),
             datasets: [
                 {
-                    label: '업로드 개수',
-                    data: recentStats.map(d => d.count),
-                    backgroundColor: checkBgColor,
-                    yAxisID: 'y'
+                    label: '업로드 수',
+                    data: pageData.map(d => d.count),
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1,
+                    yAxisID: 'y',
+                    barPercentage: 0.6
                 },
                 {
                     type: 'line',
-                    label: '조회수 합계',
-                    data: recentStats.map(d => d.views),
+                    label: '조회수 (합계)',
+                    data: pageData.map(d => d.views),
                     borderColor: '#333',
                     borderWidth: 2,
                     pointRadius: 3,
@@ -314,32 +603,44 @@ function renderCharts(videos) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             scales: {
                 y: {
                     type: 'linear',
                     display: true,
                     position: 'left',
                     title: { display: true, text: '업로드 개수' },
-                    grid: { display: false }
+                    grid: { display: false },
+                    ticks: { stepSize: 1 }
                 },
                 y1: {
                     type: 'linear',
                     display: true,
                     position: 'right',
                     title: { display: true, text: '조회수' },
-                    grid: { color: '#f0f0f0' }
+                    grid: { color: '#f0f0f0' },
+                    ticks: {
+                        callback: function (value) {
+                            return formatNumber(value);
+                        }
+                    }
                 }
             },
             plugins: {
                 legend: { position: 'top' },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
                     callbacks: {
                         label: function (context) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
-                            if (context.parsed.y !== null) label += formatNumber(context.parsed.y);
+                            if (context.parsed.y !== null) {
+                                label += context.dataset.type === 'line'
+                                    ? formatNumber(context.parsed.y)
+                                    : context.parsed.y + '개';
+                            }
                             return label;
                         }
                     }
@@ -347,6 +648,7 @@ function renderCharts(videos) {
             }
         }
     });
+
 }
 
 function renderVideoList(videos) {
@@ -365,8 +667,8 @@ function renderVideoList(videos) {
 
         tr.innerHTML = `
             <td>${index + 1}</td>
-            <td><a href="${videoUrl}" target="_blank"><img src="${thumbnail}" class="video-thumbnail-small" alt="thumb"></a></td>
-            <td class="title-cell"><a href="${videoUrl}" target="_blank" class="video-title-link">${snippet.title}</a></td>
+            <td><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;"><img src="${thumbnail}" class="video-thumbnail-small" alt="thumb"></div></td>
+            <td class="title-cell"><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;" class="video-title-link">${snippet.title}</div></td>
             <td>${new Date(snippet.publishedAt).toLocaleDateString()}</td>
             <td>${formatNumber(stats.viewCount || 0)}</td>
             <td>${formatNumber(stats.likeCount || 0)}</td>
@@ -375,6 +677,18 @@ function renderVideoList(videos) {
 
         elements.videoTableBody.appendChild(tr);
     });
+}
+
+function openVideoModal(videoId) {
+    // Reset Modal State
+    elements.modalVideoContainer.classList.remove('hidden');
+    elements.modalCommentsContainer.classList.add('hidden');
+
+    // Set Video
+    elements.modalIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    elements.externalLinkBtn.href = `https://www.youtube.com/watch?v=${videoId}`;
+
+    elements.modal.classList.remove('hidden');
 }
 
 function renderComments(comments) {
@@ -464,4 +778,9 @@ function showError(msg) {
 function clearError() {
     elements.errorMessage.classList.add('hidden');
     elements.errorMessage.textContent = '';
+}
+
+function safeParseInt(val) {
+    const parsed = parseInt(val, 10);
+    return isNaN(parsed) ? 0 : parsed;
 }
