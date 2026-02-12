@@ -22,9 +22,16 @@ const elements = {
     viewCount: document.getElementById('view-count'),
     exportBtn: document.getElementById('export-btn'),
     videoTableBody: document.getElementById('video-table-body'),
-    modal: document.getElementById('video-modal'),
+
+    // Modal Elements
+    modal: document.getElementById('universal-modal'),
+    modalContent: document.querySelector('.modal-content'),
+    closeModal: document.querySelector('.close-modal'),
+    modalVideoContainer: document.getElementById('modal-video-container'),
+    modalCommentsContainer: document.getElementById('modal-comments-container'),
     modalIframe: document.getElementById('video-iframe'),
-    closeModal: document.querySelector('.close-modal')
+    externalLinkBtn: document.getElementById('external-link-btn'),
+    commentsList: document.getElementById('comments-list')
 };
 
 // --- Initialization ---
@@ -51,7 +58,7 @@ elements.urlInput.addEventListener('keypress', (e) => {
 
 elements.exportBtn.addEventListener('click', exportToExcel);
 
-// Modal Close logic
+// Modal Logic
 elements.closeModal.addEventListener('click', closeModal);
 elements.modal.addEventListener('click', (e) => {
     if (e.target === elements.modal) closeModal();
@@ -62,9 +69,35 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-function openModal(videoId) {
-    elements.modalIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+function openVideoModal(videoId) {
+    // Reset Modal State
+    elements.modalVideoContainer.classList.remove('hidden');
+    elements.modalCommentsContainer.classList.add('hidden');
+
+    // Set Video Src with Origin to fix error 153
+    const origin = window.location.origin;
+    elements.modalIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&origin=${origin}`;
+
+    // Set Fallback Link
+    elements.externalLinkBtn.href = `https://www.youtube.com/watch?v=${videoId}`;
+
     elements.modal.classList.remove('hidden');
+}
+
+async function openCommentModal(videoId) {
+    // Reset Modal State
+    elements.modalVideoContainer.classList.add('hidden');
+    elements.modalCommentsContainer.classList.remove('hidden');
+    elements.commentsList.innerHTML = '<div class="spinner"></div><p style="text-align:center">댓글을 불러오는 중...</p>';
+
+    elements.modal.classList.remove('hidden');
+
+    try {
+        const comments = await fetchVideoComments(videoId);
+        renderComments(comments);
+    } catch (error) {
+        elements.commentsList.innerHTML = `<p class="error-message">${error.message}</p>`;
+    }
 }
 
 function closeModal() {
@@ -127,7 +160,7 @@ async function handleAnalyze() {
     }
 }
 
-// --- API Functions (Same as before) ---
+// --- API Functions ---
 
 async function resolveChannelId(url) {
     let handle = '';
@@ -204,9 +237,22 @@ async function fetchVideoDetails(videoIds) {
             videos.push(...data.items);
         }
     }
-
     return videos;
 }
+
+async function fetchVideoComments(videoId) {
+    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=20&key=${state.apiKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+        if (data.error.code === 403) throw new Error('댓글 사용이 중지되었거나 권한이 없습니다.');
+        throw new Error(data.error.message);
+    }
+
+    return data.items || [];
+}
+
 
 // --- Render Functions ---
 
@@ -219,7 +265,6 @@ function renderChannelInfo(data, videos) {
     elements.channelThumb.src = snippet.thumbnails.medium.url;
     elements.viewCount.textContent = formatNumber(stats.viewCount);
 
-    // Calculate Daily Avg Uploads
     if (videos.length > 0) {
         const firstDate = new Date(videos[videos.length - 1].snippet.publishedAt);
         const lastDate = new Date(videos[0].snippet.publishedAt);
@@ -236,7 +281,7 @@ function processDailyStats(videos) {
     const statsMap = {};
 
     videos.forEach(v => {
-        const date = v.snippet.publishedAt.split('T')[0]; // YYYY-MM-DD
+        const date = v.snippet.publishedAt.split('T')[0];
         if (!statsMap[date]) {
             statsMap[date] = { count: 0, views: 0 };
         }
@@ -244,7 +289,6 @@ function processDailyStats(videos) {
         statsMap[date].views += parseInt(v.statistics.viewCount || 0);
     });
 
-    // Convert to sorted array
     return Object.entries(statsMap)
         .sort((a, b) => new Date(a[0]) - new Date(b[0]))
         .map(([date, data]) => ({ date, ...data }));
@@ -252,9 +296,7 @@ function processDailyStats(videos) {
 
 function renderCharts(videos) {
     const dailyStats = processDailyStats(videos);
-    // Take last 30 active days for better visibility, or all if less
     const recentStats = dailyStats.slice(-30);
-
     const checkBgColor = '#03c75a';
 
     const ctx = document.getElementById('uploadChart').getContext('2d');
@@ -326,21 +368,52 @@ function renderVideoList(videos) {
     videos.forEach((video, index) => {
         const snippet = video.snippet;
         const stats = video.statistics;
-        const thumbnail = snippet.thumbnails.default?.url; // Small thumbnail
+        const thumbnail = snippet.thumbnails.default?.url;
 
         const tr = document.createElement('tr');
 
+        // Comment count clickable?
+        const commentCount = formatNumber(stats.commentCount || 0);
+
         tr.innerHTML = `
             <td>${index + 1}</td>
-            <td><img src="${thumbnail}" class="video-thumbnail-small" onclick="openModal('${video.id}')" alt="thumb"></td>
-            <td class="title-cell"><span class="video-title-link" onclick="openModal('${video.id}')">${snippet.title}</span></td>
+            <td><img src="${thumbnail}" class="video-thumbnail-small" onclick="openVideoModal('${video.id}')" alt="thumb"></td>
+            <td class="title-cell"><span class="video-title-link" onclick="openVideoModal('${video.id}')">${snippet.title}</span></td>
             <td>${new Date(snippet.publishedAt).toLocaleDateString()}</td>
             <td>${formatNumber(stats.viewCount || 0)}</td>
             <td>${formatNumber(stats.likeCount || 0)}</td>
-            <td>${formatNumber(stats.commentCount || 0)}</td>
+            <td><span class="clickable-stat" onclick="openCommentModal('${video.id}')">${commentCount}</span></td>
         `;
 
         elements.videoTableBody.appendChild(tr);
+    });
+}
+
+function renderComments(comments) {
+    elements.commentsList.innerHTML = '';
+
+    if (comments.length === 0) {
+        elements.commentsList.innerHTML = '<p style="text-align:center; color:#999;">표시할 댓글이 없습니다.</p>';
+        return;
+    }
+
+    comments.forEach(item => {
+        const top = item.snippet.topLevelComment.snippet;
+
+        const div = document.createElement('div');
+        div.className = 'comment-item';
+        div.innerHTML = `
+            <img src="${top.authorProfileImageUrl}" class="comment-avatar" alt="Avatar">
+            <div class="comment-content">
+                <h4>${top.authorDisplayName}</h4>
+                <p class="comment-text">${top.textDisplay}</p>
+                <div class="comment-meta">
+                    <span>👍 ${top.likeCount}</span> • 
+                    <span>${new Date(top.publishedAt).toLocaleDateString()}</span>
+                </div>
+            </div>
+        `;
+        elements.commentsList.appendChild(div);
     });
 }
 
@@ -349,9 +422,6 @@ function renderVideoList(videos) {
 
 function exportToExcel() {
     if (state.videos.length === 0) return;
-
-    // Group daily stats for separate sheet? Or just detail list
-    // Let's do Detail list + Daily Summary
 
     const detailRows = state.videos.map(v => ({
         'Video ID': v.id,
