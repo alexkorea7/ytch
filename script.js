@@ -486,7 +486,7 @@ async function fetchChannelDetails(channelId) {
 async function fetchAllVideoIds(playlistId) {
     let videoIds = [];
     let nextPageToken = '';
-    const MAX_PAGES = 10;
+    const MAX_PAGES = 20; // 50 * 20 = 1000 items limit
     let pageCount = 0;
 
     do {
