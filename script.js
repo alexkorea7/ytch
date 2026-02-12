@@ -8,6 +8,7 @@ const state = {
     sortColumn: 'date',
     sortOrder: 'desc',
     chartPage: 0,
+    chartTimeScale: 'daily', // 'daily' or 'monthly'
     favorites: []
 };
 
@@ -100,6 +101,9 @@ function init() {
     // Chart Nav
     const prevBtn = document.getElementById('chart-prev');
     const nextBtn = document.getElementById('chart-next');
+    const viewDailyBtn = document.getElementById('view-daily-btn');
+    const viewMonthlyBtn = document.getElementById('view-monthly-btn');
+
     if (prevBtn && nextBtn) {
         prevBtn.addEventListener('click', () => {
             state.chartPage++;
@@ -108,6 +112,28 @@ function init() {
         nextBtn.addEventListener('click', () => {
             if (state.chartPage > 0) {
                 state.chartPage--;
+                renderCharts(state.videos);
+            }
+        });
+    }
+
+    if (viewDailyBtn && viewMonthlyBtn) {
+        viewDailyBtn.addEventListener('click', () => {
+            if (state.chartTimeScale !== 'daily') {
+                state.chartTimeScale = 'daily';
+                state.chartPage = 0;
+                viewDailyBtn.classList.add('active');
+                viewMonthlyBtn.classList.remove('active');
+                renderCharts(state.videos);
+            }
+        });
+
+        viewMonthlyBtn.addEventListener('click', () => {
+            if (state.chartTimeScale !== 'monthly') {
+                state.chartTimeScale = 'monthly';
+                state.chartPage = 0;
+                viewMonthlyBtn.classList.add('active');
+                viewDailyBtn.classList.remove('active');
                 renderCharts(state.videos);
             }
         });
@@ -271,6 +297,14 @@ async function openCommentModal(videoId) {
 
     try {
         const comments = await fetchVideoComments(videoId);
+
+        // Sort by Likes Descending
+        comments.sort((a, b) => {
+            const likeA = parseInt(a.snippet.topLevelComment.snippet.likeCount || 0);
+            const likeB = parseInt(b.snippet.topLevelComment.snippet.likeCount || 0);
+            return likeB - likeA;
+        });
+
         renderComments(comments);
     } catch (error) {
         elements.commentsList.innerHTML = `<p class="error-message">${error.message}</p>`;
@@ -386,6 +420,10 @@ function handleSort(column, forceOrder = null) {
                 valA = safeParseInt(a.statistics.commentCount);
                 valB = safeParseInt(b.statistics.commentCount);
                 break;
+            case 'duration':
+                valA = parseDuration(a.contentDetails.duration);
+                valB = parseDuration(b.contentDetails.duration);
+                break;
             default:
                 return 0;
         }
@@ -408,16 +446,28 @@ async function resolveChannelId(url) {
     } else if (url.includes('/@')) {
         handle = url.split('/@')[1].split('/')[0].split('?')[0];
         return fetchChannelIdByHandle(`@${handle}`);
+    } else if (url.includes('/user/')) {
+        const username = url.split('/user/')[1].split('/')[0].split('?')[0];
+        return fetchChannelIdByUser(username);
     } else {
         if (url.startsWith('@')) {
             return fetchChannelIdByHandle(url);
         }
-        throw new Error('지원되지 않는 URL 형식입니다. /channel/ 또는 @handle 형식을 사용해주세요.');
+        throw new Error('지원되지 않는 URL 형식입니다. /channel/, /user/, 또는 @handle 형식을 사용해주세요.');
     }
 }
 
 async function fetchChannelIdByHandle(handle) {
     const url = `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${encodeURIComponent(handle)}&key=${state.apiKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    if (!data.items || data.items.length === 0) throw new Error('채널을 찾을 수 없습니다.');
+    return data.items[0].id;
+}
+
+async function fetchChannelIdByUser(username) {
+    const url = `https://www.googleapis.com/youtube/v3/channels?part=id&forUsername=${encodeURIComponent(username)}&key=${state.apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
@@ -479,7 +529,7 @@ async function fetchVideoDetails(videoIds) {
 }
 
 async function fetchVideoComments(videoId) {
-    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=20&key=${state.apiKey}`;
+    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=20&order=relevance&key=${state.apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
 
@@ -532,22 +582,77 @@ function processDailyStats(videos) {
         .map(([date, data]) => ({ date, ...data }));
 }
 
+function processMonthlyStats(videos) {
+    const statsMap = {};
+
+    videos.forEach(v => {
+        const date = v.snippet.publishedAt.split('T')[0];
+        const month = date.substring(0, 7); // YYYY-MM
+        if (!statsMap[month]) {
+            statsMap[month] = { count: 0, views: 0 };
+        }
+        statsMap[month].count += 1;
+        statsMap[month].views += parseInt(v.statistics.viewCount || 0);
+    });
+
+    return Object.entries(statsMap)
+        .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+        .map(([date, data]) => ({ date, ...data }));
+}
+
 function renderCharts(videos) {
-    const dailyStats = processDailyStats(videos);
+    let chartData = [];
+    let PAGE_SIZE = 30;
 
-    // Simplification: Always show latest 30 active days (or less if not enough data)
-    // The stats are already sorted by date ASC
-    const pageData = dailyStats.slice(-30);
+    if (state.chartTimeScale === 'monthly') {
+        chartData = processMonthlyStats(videos);
+        PAGE_SIZE = 12; // Show 1 year by default for monthly
+    } else {
+        chartData = processDailyStats(videos);
+        PAGE_SIZE = 30; // Show 30 days by default for daily
+    }
 
-    // Update Label and Buttons - Hide nav as requested for simplicity "like before"
+    const totalItems = chartData.length;
+
+    // Pagination Logic
+    // Page 0: Last N (latest)
+    // Page 1: Previous N
+    let startIndex = totalItems - ((state.chartPage + 1) * PAGE_SIZE);
+    let endIndex = totalItems - (state.chartPage * PAGE_SIZE);
+
+    if (endIndex > totalItems) endIndex = totalItems;
+    if (startIndex < 0) startIndex = 0;
+
+    // If page is out of bounds
+    if (endIndex <= 0 && totalItems > 0) {
+        state.chartPage = 0;
+        startIndex = Math.max(0, totalItems - PAGE_SIZE);
+        endIndex = totalItems;
+    }
+
+    const pageData = chartData.slice(startIndex, endIndex);
+
+    // Update Label and Buttons
     const rangeLabel = document.getElementById('chart-range-label');
     const navDiv = document.querySelector('.chart-nav');
-    if (navDiv) navDiv.style.display = 'none'; // Hide nav controls for now to simplify
+    if (navDiv) navDiv.style.display = 'flex';
+
+    // Update Button State
+    const prevBtn = document.getElementById('chart-prev');
+    const nextBtn = document.getElementById('chart-next');
+
+    if (prevBtn) prevBtn.disabled = startIndex <= 0;
+    if (nextBtn) nextBtn.disabled = state.chartPage <= 0;
+
+    if (prevBtn) prevBtn.style.opacity = startIndex <= 0 ? '0.3' : '1';
+    if (nextBtn) nextBtn.style.opacity = state.chartPage <= 0 ? '0.3' : '1';
 
     if (rangeLabel && pageData.length > 0) {
         const startStr = pageData[0].date;
         const endStr = pageData[pageData.length - 1].date;
-        rangeLabel.textContent = `${startStr} ~ ${endStr} (최근 30일)`;
+        rangeLabel.textContent = `${startStr} ~ ${endStr}`;
+    } else if (rangeLabel) {
+        rangeLabel.textContent = '데이터 없음';
     }
 
     const ctx = document.getElementById('uploadChart');
@@ -580,7 +685,7 @@ function renderCharts(videos) {
             labels: pageData.map(d => d.date),
             datasets: [
                 {
-                    label: '업로드 수',
+                    label: state.chartTimeScale === 'monthly' ? '월별 업로드 수' : '일별 업로드 수',
                     data: pageData.map(d => d.count),
                     backgroundColor: backgroundColors,
                     borderColor: borderColors,
@@ -657,8 +762,12 @@ function renderVideoList(videos) {
     videos.forEach((video, index) => {
         const snippet = video.snippet;
         const stats = video.statistics;
+        const contentDetails = video.contentDetails;
         const thumbnail = snippet.thumbnails.default?.url;
-        const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
+
+        // Duration Processing
+        const durationSec = parseDuration(contentDetails.duration);
+        const durationStr = formatDuration(durationSec);
 
         const tr = document.createElement('tr');
 
@@ -669,6 +778,7 @@ function renderVideoList(videos) {
             <td>${index + 1}</td>
             <td><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;"><img src="${thumbnail}" class="video-thumbnail-small" alt="thumb"></div></td>
             <td class="title-cell"><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;" class="video-title-link">${snippet.title}</div></td>
+            <td>${durationStr}</td>
             <td>${new Date(snippet.publishedAt).toLocaleDateString()}</td>
             <td>${formatNumber(stats.viewCount || 0)}</td>
             <td>${formatNumber(stats.likeCount || 0)}</td>
@@ -722,12 +832,36 @@ function renderComments(comments) {
 
 // --- Utils & Helpers ---
 
+function parseDuration(duration) {
+    const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+    if (!match) return 0;
+
+    const hours = (parseInt(match[1]) || 0);
+    const minutes = (parseInt(match[2]) || 0);
+    const seconds = (parseInt(match[3]) || 0);
+
+    return (hours * 3600) + (minutes * 60) + seconds;
+}
+
+function formatDuration(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+
+    if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    } else {
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+}
+
 function exportToExcel() {
     if (state.videos.length === 0) return;
 
     const detailRows = state.videos.map(v => ({
         'Video ID': v.id,
         '제목': v.snippet.title,
+        '길이': formatDuration(parseDuration(v.contentDetails.duration)),
         '업로드 일자': new Date(v.snippet.publishedAt).toISOString().split('T')[0],
         '조회수': parseInt(v.statistics.viewCount || 0),
         '좋아요 수': parseInt(v.statistics.likeCount || 0),

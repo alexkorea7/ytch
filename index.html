@@ -23,6 +23,14 @@
                 <div class="logo">
                     <i data-lucide="bar-chart-2" class="brand-icon"></i>
                     <h1>Youtube Channel Analyzer</h1>
+                    <div class="social-links">
+                        <a href="https://www.youtube.com/" target="_blank" class="social-btn" title="YouTube 홈"><i
+                                data-lucide="youtube"></i></a>
+                        <a href="https://www.tiktok.com/" target="_blank" class="social-btn" title="TikTok"><i
+                                data-lucide="music-2"></i></a>
+                        <a href="https://www.instagram.com/" target="_blank" class="social-btn" title="Instagram"><i
+                                data-lucide="instagram"></i></a>
+                    </div>
                 </div>
                 <div class="input-group api-key-group">
                     <input type="password" id="api-key-input" placeholder="YouTube Data API Key 입력" />
@@ -92,11 +100,18 @@
                 <div class="charts-area">
                     <div class="chart-container">
                         <div class="chart-header">
-                            <h3>📅 일별 업로드 추이</h3>
-                            <div class="chart-nav">
-                                <button id="chart-prev" class="btn-icon"><i data-lucide="chevron-left"></i></button>
-                                <span id="chart-range-label">최근 30일</span>
-                                <button id="chart-next" class="btn-icon"><i data-lucide="chevron-right"></i></button>
+                            <h3>📅 업로드 추이</h3>
+                            <div class="chart-options-group">
+                                <div class="toggle-group">
+                                    <button id="view-daily-btn" class="toggle-btn active">일별</button>
+                                    <button id="view-monthly-btn" class="toggle-btn">월별</button>
+                                </div>
+                                <div class="chart-nav">
+                                    <button id="chart-prev" class="btn-icon"><i data-lucide="chevron-left"></i></button>
+                                    <span id="chart-range-label">최근 30일</span>
+                                    <button id="chart-next" class="btn-icon"><i
+                                            data-lucide="chevron-right"></i></button>
+                                </div>
                             </div>
                         </div>
                         <canvas id="uploadChart"></canvas>
@@ -111,6 +126,8 @@
                                 <th width="60">No.</th>
                                 <th width="80">썸네일</th>
                                 <th>영상 제목</th>
+                                <th width="80" class="sortable" data-sort="duration">길이 <i data-lucide="arrow-up-down"
+                                        class="sort-icon"></i></th>
                                 <th width="120" class="sortable" data-sort="date">업로드일 <i data-lucide="arrow-up-down"
                                         class="sort-icon"></i></th>
                                 <th width="100" class="sortable" data-sort="views">조회수 <i data-lucide="arrow-up-down"
