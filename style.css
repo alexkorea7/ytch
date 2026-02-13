@@ -595,10 +595,25 @@ input:focus {
     padding: 0.5rem;
 }
 
-/* ... existing code ... */
+/* View Count Highlighting */
+.views-high {
+    color: #e50914;
+    /* YouTube Red */
+}
 
-/* Top Music Section */
-.top-music-section {
+.views-mega {
+    color: #e50914;
+    font-weight: 800;
+}
+
+.views-ultra {
+    color: #9b59b6;
+    /* Purple */
+    font-weight: 800;
+}
+
+/* Keyword Analysis Section */
+.keyword-section {
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -607,16 +622,16 @@ input:focus {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.music-section-header {
+.keyword-section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--border-light);
     padding-bottom: 0.5rem;
 }
 
-.music-section-header h3 {
+.keyword-section-header h3 {
     font-size: 1.1rem;
     color: var(--text-primary);
     display: flex;
@@ -624,92 +639,161 @@ input:focus {
     gap: 0.5rem;
 }
 
-.music-cards-container {
+.keyword-cloud-container {
     display: flex;
-    gap: 1rem;
-    justify-content: start;
     flex-wrap: wrap;
-}
-
-.music-card {
-    flex: 1;
-    min-width: 250px;
-    background-color: var(--bg-hover);
-    padding: 1rem;
-    border-radius: 8px;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    transition: transform 0.2s;
-    border: 1px solid transparent;
-}
-
-.music-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent-color);
-    background-color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.music-thumb-placeholder {
-    width: 50px;
-    height: 50px;
-    background-color: #333;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
+    gap: 0.75rem;
     justify-content: center;
-    color: white;
-    font-size: 1.5rem;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--bg-hover);
+    border-radius: 8px;
+    min-height: 150px;
 }
 
-.music-info {
-    flex: 1;
-    overflow: hidden;
-}
-
-.music-title {
+.keyword-tag {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
     font-weight: 600;
-    font-size: 0.95rem;
+    cursor: default;
+    transition: transform 0.2s;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
-.music-artist {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.keyword-tag:hover {
+    transform: scale(1.1);
 }
 
-.music-count {
-    font-size: 0.8rem;
-    color: var(--accent-color);
-    font-weight: 500;
-    margin-top: 0.25rem;
+.keyword-tag .tag-count {
+    font-size: 0.4em;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 2px 4px;
+    margin-left: 4px;
+    vertical-align: top;
+    opacity: 0.7;
 }
 
-.view-all-music-btn {
-    background: none;
-    border: none;
+.tag-hot {
+    color: #e50914;
+}
+
+.tag-warm {
+    color: #d35400;
+}
+
+.tag-normal {
+    color: #555;
+}
+
+
+/* Keyword Modal Stats */
+.keyword-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-card {
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stats-card h4 {
+    margin: 0 0 0.5rem 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    transition: all 0.2s;
 }
 
-.view-all-music-btn:hover {
-    background-color: var(--bg-hover);
+.stats-card .big-number {
+    font-size: 2rem;
+    font-weight: 700;
     color: var(--text-primary);
 }
+
+.stats-card .big-number.highlight {
+    color: var(--accent-color);
+}
+
+.keyword-list-header {
+    display: grid;
+    grid-template-columns: 50px 2fr 100px 100px;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.keyword-list-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+}
+
+.keyword-list-row {
+    display: grid;
+    grid-template-columns: 50px 2fr 100px 100px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.keyword-list-row:hover {
+    background-color: var(--bg-hover);
+}
+
+.rank-col {
+    font-weight: bold;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.word-col {
+    font-weight: 600;
+}
+
+.count-col {
+    font-family: monospace;
+    font-size: 1rem;
+}
+
+.bar-col {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.percent-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.percent-bar-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
+.percent-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    width: 35px;
+    text-align: right;
+}
+
+/* ... existing code ... */
+
 
 /* Table Enhancements */
 .video-type-icon {
@@ -736,41 +820,6 @@ input:focus {
     color: var(--accent-color);
     border-color: var(--accent-color);
     background-color: rgba(3, 199, 90, 0.05);
-}
-
-/* Modal List */
-.music-list-detailed {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.music-list-item {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--border-light);
-    gap: 1rem;
-}
-
-.music-list-rank {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--text-light);
-    width: 30px;
-    text-align: center;
-}
-
-.music-list-item:nth-child(1) .music-list-rank {
-    color: gold;
-}
-
-.music-list-item:nth-child(2) .music-list-rank {
-    color: silver;
-}
-
-.music-list-item:nth-child(3) .music-list-rank {
-    color: #cd7f32;
 }
 
 /* Download Button in Modal */

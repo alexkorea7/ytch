@@ -311,13 +311,14 @@ async function openCommentModal(videoId) {
     }
 }
 
+
 function closeModal() {
     elements.modalIframe.src = '';
     elements.modal.classList.add('hidden');
     const favContainer = document.getElementById('modal-favorites-container');
-    const musContainer = document.getElementById('modal-music-container');
+    const keyContainer = document.getElementById('modal-keyword-container');
     if (favContainer) favContainer.classList.add('hidden');
-    if (musContainer) musContainer.classList.add('hidden');
+    if (keyContainer) keyContainer.classList.add('hidden');
 }
 
 // --- Core Logic ---
@@ -360,14 +361,13 @@ async function handleAnalyze() {
         // Save to state
         state.videos = videos;
 
-        // Music Analysis
-        const musicStats = processMusicStats(videos);
-        state.musicStats = musicStats;
+        // Keyword Analysis
+        const keywords = analyzeKeywords(videos);
+        renderKeywordSection(keywords);
 
         // Render Profile
         renderChannelInfo(channelData, videos);
         renderCharts(videos);
-        renderMusicSection(musicStats);
 
         // Initial Sort (Date Desc)
         handleSort('date', 'desc');
@@ -551,160 +551,174 @@ async function fetchVideoComments(videoId) {
 
 // --- Render Functions ---
 
-// --- Music & Shorts Logic ---
+// --- Utils & Helpers ---
 
 function isShorts(durationIso) {
     const seconds = parseDuration(durationIso);
     return seconds <= 60;
 }
 
-function parseMusicFromDescription(description) {
-    if (!description) return null;
+// --- Keyword Analysis Logic ---
 
-    // Common patterns for music credits
-    const patterns = [
-        /(?:Music|Song|Track|BGM|음악|노래)\s*[:\-]\s*(.+)/i,
-        /🎵\s*(.+)/,
-        /♪\s*(.+)/
-    ];
-
-    for (const pattern of patterns) {
-        const match = description.match(pattern);
-        if (match && match[1]) {
-            // Clean up: remove typical suffix junk if present (e.g. by Artist)
-            let raw = match[1].split(/\n/)[0].trim(); // Take first line
-            // simple cleanup
-            return raw;
-        }
-    }
-
-    // Check for "Music in this video" auto-generated block is hard without raw HTML, 
-    // but often description contains "Song: Title - Artist"
-    return null;
-}
-
-function processMusicStats(videos) {
-    const stats = {};
+function analyzeKeywords(videos) {
+    const wordCounts = {};
+    const stopWords = new Set([
+        'shorts', 'video', 'vlog', '브이로그', '영상', '동영상', '티저', '하이라이트',
+        'sub', 'Eng', 'kr', 'the', 'a', 'an', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'by',
+        '이', '그', '저', '것', '수', '등', '들', '제', '개', '내', '너', '우리', '함께'
+    ]);
 
     videos.forEach(v => {
-        const musicName = parseMusicFromDescription(v.snippet.description);
-        if (musicName) {
-            // Normalize simple string (lowercase, remove special chars?) - optional
-            const key = musicName.toLowerCase().trim();
-            if (!stats[key]) {
-                stats[key] = {
-                    title: musicName, // Keep original casing
-                    count: 0,
-                    exampleVideoId: v.id,
-                    exampleThumb: v.snippet.thumbnails.default?.url
-                };
+        const title = v.snippet.title;
+        if (!title) return;
+
+        // 1. Clean Title: Remove brackets, special chars
+        const cleanTitle = title.replace(/[\[\]\(\)\{\}\|!?,.`~@#$%^&*_+=\-]/g, ' ');
+
+        // 2. Tokenize by space
+        const tokens = cleanTitle.split(/\s+/);
+
+        tokens.forEach(token => {
+            const word = token.trim();
+            // Filter: Length > 1 and not a stopword (and not just numbers)
+            if (word.length > 1 && !stopWords.has(word.toLowerCase()) && isNaN(word)) {
+
+                // Optional: Trim particles? (Very basic heuristic for Korean)
+                // e.g. '여행을' -> '여행' (risky without full dictionary)
+                // Let's stick to exact words for safety first, maybe strip common suffixes if easy
+
+                const key = word;
+                wordCounts[key] = (wordCounts[key] || 0) + 1;
             }
-            stats[key].count++;
-        }
+        });
     });
 
-    // Convert to array and sort
-    return Object.values(stats).sort((a, b) => b.count - a.count);
-}
+    // Convert to array
+    const sorted = Object.entries(wordCounts)
+        .map(([word, count]) => ({ word, count }))
+        .sort((a, b) => b.count - a.count);
 
+    return sorted;
+}
 
 // --- Render Functions ---
 
-function renderMusicSection(musicStats) {
-    const section = document.getElementById('top-music-section');
+function renderKeywordSection(keywords) {
+    const section = document.getElementById('keyword-analysis-section');
     if (!section) return;
 
-    if (musicStats.length === 0) {
+    if (keywords.length === 0) {
         section.classList.add('hidden');
         return;
     }
 
     section.classList.remove('hidden');
 
-    // Header
     let html = `
-        <div class="music-section-header">
-            <h3>🎵 가장 많이 사용된 음악 (Top 3)</h3>
-            <button id="view-all-music-btn" class="view-all-music-btn">
-                전체보기 <i data-lucide="chevron-right"></i>
+        <div class="keyword-section-header">
+            <h3>🔑 인기 키워드 (Top 20)</h3>
+            <button id="view-all-keywords-btn" class="view-all-btn">
+                상세 통계 보기 <i data-lucide="bar-chart-2"></i>
             </button>
         </div>
-        <div class="music-cards-container">
+        <div class="keyword-cloud-container">
     `;
 
-    // Top 3 Cards
-    const top3 = musicStats.slice(0, 3);
+    // Take top 20 for cloud
+    const top20 = keywords.slice(0, 20);
+    const maxCount = top20[0]?.count || 1;
+    const minCount = top20[top20.length - 1]?.count || 1;
 
-    if (top3.length === 0) {
-        html += `<p style="color:var(--text-secondary);">감지된 음악 정보가 없습니다.</p>`;
-    } else {
-        top3.forEach((m, idx) => {
-            html += `
-                <div class="music-card" onclick="openMusicModal()">
-                    <div class="music-thumb-placeholder">
-                        <i data-lucide="music"></i>
-                    </div>
-                    <div class="music-info">
-                        <div class="music-title" title="${m.title}">${m.title}</div>
-                        <div class="music-artist">사용된 영상: ${m.count}개</div>
-                    </div>
-                    <div class="music-count">#${idx + 1}</div>
-                </div>
-            `;
-        });
-    }
+    // Scale Font Size: Min 1rem to Max 2.5rem
+    top20.forEach(k => {
+        // Simple linear scale
+        const scale = (k.count - minCount) / (maxCount - minCount || 1);
+        const fontSize = 1 + (scale * 1.5); // 1.0 ~ 2.5rem
+
+        // Color variation based on popularity
+        let colorClass = 'tag-normal';
+        if (scale > 0.8) colorClass = 'tag-hot';
+        else if (scale > 0.4) colorClass = 'tag-warm';
+
+        html += `
+            <span class="keyword-tag ${colorClass}" style="font-size: ${fontSize.toFixed(2)}rem" title="${k.count}회 사용됨">
+                ${k.word}
+                <span class="tag-count">${k.count}</span>
+            </span>
+        `;
+    });
 
     html += `</div>`;
     section.innerHTML = html;
 
-    const viewAllBtn = document.getElementById('view-all-music-btn');
-    if (viewAllBtn) {
-        viewAllBtn.addEventListener('click', () => openMusicModal(musicStats));
+    const btn = document.getElementById('view-all-keywords-btn');
+    if (btn) {
+        btn.onclick = () => openKeywordModal(keywords);
     }
 
-    // Re-init icons for the inserted HTML
     lucide.createIcons();
 }
 
-function openMusicModal(musicStats) {
-    // If passed arg is event (click), ignore or use state
-    // We might need to store calculated stats in state to access here if passed cleanly
-    // But for now let's assume we pass it or retrieve from state if we stored it. 
-    // Let's rely on state storage for robustness.
-    const stats = state.musicStats || musicStats || [];
+function openKeywordModal(keywords) {
+    const stats = keywords || [];
 
     const vidContainer = document.getElementById('modal-video-container');
     const comContainer = document.getElementById('modal-comments-container');
     const favContainer = document.getElementById('modal-favorites-container');
-    const musContainer = document.getElementById('modal-music-container');
+    const keyContainer = document.getElementById('modal-keyword-container');
 
     if (vidContainer) vidContainer.classList.add('hidden');
     if (comContainer) comContainer.classList.add('hidden');
     if (favContainer) favContainer.classList.add('hidden');
-    if (musContainer) musContainer.classList.remove('hidden');
+    if (keyContainer) keyContainer.classList.remove('hidden');
 
-    const list = document.getElementById('music-list');
-    list.innerHTML = '';
+    const detailView = document.getElementById('keyword-detail-view');
+    detailView.innerHTML = '';
 
-    if (stats.length === 0) {
-        list.innerHTML = '<p class="text-center">분석된 음악 정보가 없습니다.</p>';
-    } else {
-        stats.slice(0, 50).forEach((m, idx) => { // Show max 50
-            const div = document.createElement('div');
-            div.className = 'music-list-item';
-            div.innerHTML = `
-                <div class="music-list-rank">${idx + 1}</div>
-                <div style="flex:1">
-                    <div style="font-weight:600; font-size:1rem;">${m.title}</div>
-                    <div style="color:var(--text-secondary); font-size:0.85rem;">총 ${m.count}개 영상에서 사용됨</div>
+    // Create a Table-like layout for detailed stats
+    let html = `
+        <div class="keyword-stats-grid">
+            <div class="stats-card total-keywords">
+                <h4>분석된 총 단어</h4>
+                <div class="big-number">${formatNumber(stats.length)}</div>
+            </div>
+            <div class="stats-card top-keyword">
+                <h4>최다 등장</h4>
+                <div class="big-number highlight">${stats[0]?.word || '-'}</div>
+                <div class="sub-text">${stats[0]?.count || 0}회</div>
+            </div>
+        </div>
+
+        <div class="keyword-list-header">
+            <span>순위</span>
+            <span>키워드</span>
+            <span>사용 횟수</span>
+            <span>비중</span>
+        </div>
+        <div class="keyword-list-scroll">
+    `;
+
+    const totalOccurrences = stats.reduce((sum, item) => sum + item.count, 0);
+
+    stats.slice(0, 100).forEach((k, idx) => {
+        const percentage = ((k.count / totalOccurrences) * 100).toFixed(1);
+        html += `
+            <div class="keyword-list-row">
+                <div class="rank-col">${idx + 1}</div>
+                <div class="word-col">${k.word}</div>
+                <div class="count-col">${k.count}</div>
+                <div class="bar-col">
+                    <div class="percent-bar-bg">
+                        <div class="percent-bar-fill" style="width:${percentage}%"></div>
+                    </div>
+                    <span class="percent-text">${percentage}%</span>
                 </div>
-                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(m.title)}" target="_blank" class="btn-icon">
-                    <i data-lucide="search"></i>
-                </a>
-            `;
-            list.appendChild(div);
-        });
-    }
+            </div>
+        `;
+    });
+
+    html += `</div>`; // Close list-scroll
+    detailView.innerHTML = html;
 
     elements.modal.classList.remove('hidden');
     lucide.createIcons();
@@ -942,20 +956,24 @@ function renderVideoList(videos) {
             ? '<i data-lucide="smartphone" class="video-type-icon" style="color:var(--accent-color)" title="Shorts"></i>'
             : '<i data-lucide="monitor" class="video-type-icon" style="color:var(--text-light)" title="일반 동영상"></i>';
 
-        // Music Check
-        const musicName = parseMusicFromDescription(snippet.description);
-        let musicBadge = '-';
-        if (musicName) {
-            // Trim to 3 chars for display
-            let display = musicName.substring(0, 3);
-            if (musicName.length > 3) display += '..';
-            musicBadge = `<span class="music-badge has-music" title="${musicName}">${display}</span>`;
-        }
-
         const tr = document.createElement('tr');
 
         // Comment count clickable?
         const commentCount = formatNumber(stats.commentCount || 0);
+
+        // ** View Count Highlighting Logic **
+        const viewCountVal = parseInt(stats.viewCount || 0);
+        let viewCountDisplay = formatNumber(viewCountVal);
+        let viewClass = '';
+
+        if (viewCountVal >= 5000000) {
+            viewClass = 'views-ultra'; // Purple Bold
+            viewCountDisplay = `✨${viewCountDisplay}`;
+        } else if (viewCountVal >= 1000000) {
+            viewClass = 'views-mega'; // Bold Red
+        } else if (viewCountVal >= 500000) {
+            viewClass = 'views-high'; // Red
+        }
 
         tr.innerHTML = `
             <td>${index + 1}</td>
@@ -965,10 +983,9 @@ function renderVideoList(videos) {
                     ${typeIcon} ${snippet.title}
                 </div>
             </td>
-            <td>${musicBadge}</td>
             <td>${durationStr}</td>
             <td>${new Date(snippet.publishedAt).toLocaleDateString()}</td>
-            <td>${formatNumber(stats.viewCount || 0)}</td>
+            <td><span class="${viewClass}">${viewCountDisplay}</span></td>
             <td>${formatNumber(stats.likeCount || 0)}</td>
             <td><span class="clickable-stat" onclick="openCommentModal('${video.id}')">${commentCount}</span></td>
         `;
@@ -983,12 +1000,30 @@ function openVideoModal(videoId) {
     // Reset Modal State
     elements.modalVideoContainer.classList.remove('hidden');
     elements.modalCommentsContainer.classList.add('hidden');
+    const favContainer = document.getElementById('modal-favorites-container');
+    const musContainer = document.getElementById('modal-music-container');
+    if (favContainer) favContainer.classList.add('hidden');
+    if (musContainer) musContainer.classList.add('hidden');
 
     // Set Video
     elements.modalIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
     elements.externalLinkBtn.href = `https://www.youtube.com/watch?v=${videoId}`;
 
+    // Download Button Setup (Static)
+    const downloadBtn = document.getElementById('modal-download-btn');
+    if (downloadBtn) {
+        // Clone to remove old event listeners
+        const newBtn = downloadBtn.cloneNode(true);
+        downloadBtn.parentNode.replaceChild(newBtn, downloadBtn);
+
+        newBtn.onclick = function () {
+            const downloadUrl = `https://ssyoutube.com/watch?v=${videoId}`;
+            window.open(downloadUrl, '_blank');
+        };
+    }
+
     elements.modal.classList.remove('hidden');
+    lucide.createIcons();
 }
 
 function renderComments(comments) {

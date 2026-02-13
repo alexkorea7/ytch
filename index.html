@@ -96,8 +96,8 @@
                     </div>
                 </div>
 
-                <!-- Top Music Section -->
-                <div id="top-music-section" class="top-music-section hidden">
+                <!-- Keyword Analysis Section -->
+                <div id="keyword-analysis-section" class="keyword-section hidden">
                     <!-- Injected by script.js -->
                 </div>
 
@@ -131,7 +131,6 @@
                                 <th width="60">No.</th>
                                 <th width="80">썸네일</th>
                                 <th>영상 제목</th>
-                                <th width="80">음악</th> <!-- New Column -->
                                 <th width="80" class="sortable" data-sort="duration">길이 <i data-lucide="arrow-up-down"
                                         class="sort-icon"></i></th>
                                 <th width="120" class="sortable" data-sort="date">업로드일 <i data-lucide="arrow-up-down"
@@ -166,6 +165,9 @@
                         allowfullscreen></iframe>
                 </div>
                 <div class="modal-footer">
+                    <button id="modal-download-btn" class="btn btn-download">
+                        <i data-lucide="download"></i> 영상 다운로드 (화질선택)
+                    </button>
                     <a id="external-link-btn" href="#" target="_blank" class="btn btn-secondary">
                         <i data-lucide="external-link"></i> YouTube에서 보기 (재생 오류 시)
                     </a>
@@ -187,11 +189,11 @@
                 </div>
             </div>
 
-            <!-- Music List Container -->
-            <div id="modal-music-container" class="modal-body hidden">
-                <h3>🎵 많이 사용된 음악 (Top 10)</h3>
-                <div id="music-list" class="music-list-detailed">
-                    <!-- Music list injected here -->
+            <!-- Keyword Analysis Container -->
+            <div id="modal-keyword-container" class="modal-body hidden">
+                <h3>🔑 키워드 분석 리포트</h3>
+                <div id="keyword-detail-view">
+                    <!-- Detailed stats injected here -->
                 </div>
             </div>
         </div>
