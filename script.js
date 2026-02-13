@@ -665,6 +665,30 @@ function analyzeTitleLength(videos) {
     };
 }
 
+function analyzeVideoDuration(videos) {
+    const distribution = {
+        '1~10초': 0,
+        '11~20초': 0,
+        '21~30초': 0,
+        '31~40초': 0,
+        '41~50초': 0,
+        '51초 이상': 0
+    };
+
+    videos.forEach(v => {
+        const seconds = parseDuration(v.contentDetails.duration);
+
+        if (seconds <= 10) distribution['1~10초']++;
+        else if (seconds <= 20) distribution['11~20초']++;
+        else if (seconds <= 30) distribution['21~30초']++;
+        else if (seconds <= 40) distribution['31~40초']++;
+        else if (seconds <= 50) distribution['41~50초']++;
+        else distribution['51초 이상']++;
+    });
+
+    return distribution;
+}
+
 // --- Render Functions ---
 
 function renderKeywordSection(keywords) {
@@ -744,6 +768,7 @@ function openKeywordModal(keywords) {
     const uploadTimes = analyzeUploadTimes(videos);
     const seasonalKeywords = analyzeSeasons(videos);
     const titleStats = analyzeTitleLength(videos);
+    const durationStats = analyzeVideoDuration(videos); // New Analysis
 
     // Calc Peak Time
     let maxHour = 0;
@@ -815,6 +840,21 @@ function openKeywordModal(keywords) {
 
             <div class="modal-divider"></div>
 
+            <!-- Video Duration (New) -->
+            <div class="chart-section-row">
+                <div class="chart-text-col">
+                    <h4>⏳ 영상 길이 분포</h4>
+                    <p class="chart-desc">영상의 길이를 10초 단위로 분석합니다.<br>어떤 길이의 영상을 주로 만드는지 확인해보세요.</p>
+                </div>
+                <div class="chart-canvas-col">
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="videoDurationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-divider"></div>
+
             <!-- 3. Seasonal Keywords -->
             <div class="seasonal-section">
                 <h4>🍂 계절별 주요 키워드</h4>
@@ -872,6 +912,7 @@ function openKeywordModal(keywords) {
     // -- Render Charts --
     renderUploadTimeChart(uploadTimes);
     renderTitleLenChart(titleStats.distribution);
+    renderVideoDurationChart(durationStats); // Render new chart
 }
 
 function getSeasonIcon(eng) {
@@ -937,6 +978,44 @@ function renderTitleLenChart(dist) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { position: 'right' }
+            }
+        }
+    });
+}
+
+function renderVideoDurationChart(dist) {
+    const ctx = document.getElementById('videoDurationChart').getContext('2d');
+
+    // Destroy existing
+    if (state.modalCharts.duration) {
+        state.modalCharts.duration.destroy();
+    }
+
+    state.modalCharts.duration = new Chart(ctx, {
+        type: 'bar', // Using Bar chart for distribution
+        data: {
+            labels: Object.keys(dist),
+            datasets: [{
+                label: '영상 수',
+                data: Object.values(dist),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 159, 64, 0.6)'
+                ],
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
             }
         }
     });
