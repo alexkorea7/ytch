@@ -9,7 +9,8 @@ const state = {
     sortOrder: 'desc',
     chartPage: 0,
     chartTimeScale: 'daily', // 'daily' or 'monthly'
-    favorites: []
+    favorites: [],
+    modalCharts: {} // Store chart instances for destruction
 };
 
 const elements = {
@@ -601,6 +602,69 @@ function analyzeKeywords(videos) {
     return sorted;
 }
 
+// --- Advanced Analytics ---
+
+function analyzeUploadTimes(videos) {
+    const hourlyCounts = new Array(24).fill(0);
+    videos.forEach(v => {
+        const date = new Date(v.snippet.publishedAt);
+        const hour = date.getHours();
+        hourlyCounts[hour]++;
+    });
+    return hourlyCounts;
+}
+
+function analyzeSeasons(videos) {
+    const seasons = { Spring: [], Summer: [], Fall: [], Winter: [] };
+
+    videos.forEach(v => {
+        const date = new Date(v.snippet.publishedAt);
+        const month = date.getMonth() + 1; // 1-12
+        let season = '';
+
+        if (month >= 3 && month <= 5) season = 'Spring';
+        else if (month >= 6 && month <= 8) season = 'Summer';
+        else if (month >= 9 && month <= 11) season = 'Fall';
+        else season = 'Winter'; // 12, 1, 2
+
+        seasons[season].push(v);
+    });
+
+    // Extract top keywords for each season
+    const result = {};
+    for (const [season, vids] of Object.entries(seasons)) {
+        if (vids.length > 0) {
+            const keywords = analyzeKeywords(vids); // Reuse existing function
+            result[season] = keywords.slice(0, 5).map(k => k.word); // Top 5
+        } else {
+            result[season] = [];
+        }
+    }
+    return result;
+}
+
+function analyzeTitleLength(videos) {
+    let totalLen = 0;
+    let maxLen = 0;
+    const distribution = { 'Short (<20)': 0, 'Medium (20-50)': 0, 'Long (>50)': 0 };
+
+    videos.forEach(v => {
+        const len = v.snippet.title.length;
+        totalLen += len;
+        if (len > maxLen) maxLen = len;
+
+        if (len < 20) distribution['Short (<20)']++;
+        else if (len <= 50) distribution['Medium (20-50)']++;
+        else distribution['Long (>50)']++;
+    });
+
+    return {
+        avg: videos.length ? (totalLen / videos.length).toFixed(1) : 0,
+        max: maxLen,
+        distribution
+    };
+}
+
 // --- Render Functions ---
 
 function renderKeywordSection(keywords) {
@@ -661,6 +725,7 @@ function renderKeywordSection(keywords) {
 
 function openKeywordModal(keywords) {
     const stats = keywords || [];
+    const videos = state.videos; // Access global videos state
 
     const vidContainer = document.getElementById('modal-video-container');
     const comContainer = document.getElementById('modal-comments-container');
@@ -675,27 +740,108 @@ function openKeywordModal(keywords) {
     const detailView = document.getElementById('keyword-detail-view');
     detailView.innerHTML = '';
 
-    // Create a Table-like layout for detailed stats
-    let html = `
-        <div class="keyword-stats-grid">
-            <div class="stats-card total-keywords">
-                <h4>분석된 총 단어</h4>
-                <div class="big-number">${formatNumber(stats.length)}</div>
-            </div>
-            <div class="stats-card top-keyword">
-                <h4>최다 등장</h4>
-                <div class="big-number highlight">${stats[0]?.word || '-'}</div>
-                <div class="sub-text">${stats[0]?.count || 0}회</div>
-            </div>
-        </div>
+    // -- Run Advanced Analysis --
+    const uploadTimes = analyzeUploadTimes(videos);
+    const seasonalKeywords = analyzeSeasons(videos);
+    const titleStats = analyzeTitleLength(videos);
 
-        <div class="keyword-list-header">
-            <span>순위</span>
-            <span>키워드</span>
-            <span>사용 횟수</span>
-            <span>비중</span>
-        </div>
-        <div class="keyword-list-scroll">
+    // Calc Peak Time
+    let maxHour = 0;
+    let maxCount = -1;
+    uploadTimes.forEach((count, hour) => {
+        if (count > maxCount) {
+            maxCount = count;
+            maxHour = hour;
+        }
+    });
+    const peakTimeStr = `${maxHour}시 ~ ${maxHour + 1}시`;
+
+    // -- Layout Construction --
+    let html = `
+        <div class="analytics-dashboard">
+            <!-- 1. Top Level Stats -->
+            <div class="keyword-stats-grid">
+                <div class="stats-card">
+                    <h4>분석된 총 단어</h4>
+                    <div class="big-number">${formatNumber(stats.length)}</div>
+                </div>
+                <div class="stats-card">
+                    <h4>최다 등장</h4>
+                    <div class="big-number highlight">${stats[0]?.word || '-'}</div>
+                    <div class="sub-text">${stats[0]?.count || 0}회</div>
+                </div>
+                <div class="stats-card">
+                    <h4>평균 제목 길이</h4>
+                    <div class="big-number">${titleStats.avg}자</div>
+                </div>
+                <div class="stats-card">
+                    <h4>황금 업로드 시간</h4>
+                    <div class="big-number highlight">${peakTimeStr}</div>
+                    <div class="sub-text">가장 영상이 많은 시간대</div>
+                </div>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <!-- 2. Charts Section (Stacked) -->
+            
+            <!-- Upload Time -->
+            <div class="chart-section-row">
+                <div class="chart-text-col">
+                    <h4>⏰ 시간대별 업로드 패턴</h4>
+                    <p class="chart-desc">채널 주인이 영상을 주로 업로드하는 시간대입니다.<br>이 시간에 맞춰 영상을 올리면 반응이 좋을 수 있습니다.</p>
+                </div>
+                <div class="chart-canvas-col">
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="uploadTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <!-- Title Length -->
+            <div class="chart-section-row">
+                <div class="chart-text-col">
+                    <h4>📝 제목 길이 분포</h4>
+                    <p class="chart-desc">제목의 길이를 분석합니다.<br>이 채널은 <strong>${titleStats.max}자</strong>까지 제목을 쓴 적이 있습니다.</p>
+                </div>
+                <div class="chart-canvas-col">
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="titleLenChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <!-- 3. Seasonal Keywords -->
+            <div class="seasonal-section">
+                <h4>🍂 계절별 주요 키워드</h4>
+                <div class="season-cards-container">
+                    ${Object.entries(seasonalKeywords).map(([season, keys]) => `
+                        <div class="season-pretty-card ${season.toLowerCase()}">
+                            <div class="season-icon">${getSeasonIcon(season)}</div>
+                            <div class="season-name">${getSeasonName(season)}</div>
+                            <div class="season-keywords-list">
+                                ${keys.length ? keys.map(k => `<span class="s-tag">#${k}</span>`).join('') : '<span class="empty">-</span>'}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <!-- 4. Full Keyword List -->
+            <h3>🔑 전체 키워드 순위</h3>
+            <div class="keyword-list-header">
+                <span>순위</span>
+                <span>키워드</span>
+                <span>사용 횟수</span>
+                <span>비중</span>
+            </div>
+            <div class="keyword-list-scroll">
     `;
 
     const totalOccurrences = stats.reduce((sum, item) => sum + item.count, 0);
@@ -717,11 +863,83 @@ function openKeywordModal(keywords) {
         `;
     });
 
-    html += `</div>`; // Close list-scroll
+    html += `</div></div>`; // Close scroll & dashboard
     detailView.innerHTML = html;
 
     elements.modal.classList.remove('hidden');
     lucide.createIcons();
+
+    // -- Render Charts --
+    renderUploadTimeChart(uploadTimes);
+    renderTitleLenChart(titleStats.distribution);
+}
+
+function getSeasonIcon(eng) {
+    const map = { 'Spring': '🌸', 'Summer': '🌊', 'Fall': '🍁', 'Winter': '❄️' };
+    return map[eng] || '📅';
+}
+
+function getSeasonName(eng) {
+    const map = { 'Spring': 'Spring', 'Summer': 'Summer', 'Fall': 'Autumn', 'Winter': 'Winter' };
+    return map[eng] || eng;
+}
+
+function renderUploadTimeChart(data) {
+    const ctx = document.getElementById('uploadTimeChart').getContext('2d');
+
+    // Destroy existing
+    if (state.modalCharts.upload) {
+        state.modalCharts.upload.destroy();
+    }
+
+    state.modalCharts.upload = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Array.from({ length: 24 }, (_, i) => `${i}시`),
+            datasets: [{
+                label: '업로드 수',
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+}
+
+function renderTitleLenChart(dist) {
+    const ctx = document.getElementById('titleLenChart').getContext('2d');
+
+    // Destroy existing
+    if (state.modalCharts.title) {
+        state.modalCharts.title.destroy();
+    }
+
+    state.modalCharts.title = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(dist),
+            datasets: [{
+                data: Object.values(dist),
+                backgroundColor: ['#2ecc71', '#f1c40f', '#e74c3c']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
 }
 
 
@@ -741,9 +959,30 @@ function renderChannelInfo(data, videos) {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
         const avg = (videos.length / diffDays).toFixed(2);
         elements.dailyUploadAvg.textContent = `${avg}개 / 일 (최근 ${videos.length}개 기준)`;
-    } else {
-        elements.dailyUploadAvg.textContent = "0개";
+        // Revenue Calculation
+        const revenue = calculateRevenue(videos);
+        const revenueEl = document.getElementById('estimated-revenue');
+        if (revenueEl) {
+            revenueEl.textContent = formatCurrency(revenue);
+        }
     }
+}
+
+function calculateRevenue(videos) {
+    let totalRev = 0;
+    videos.forEach(v => {
+        const views = parseInt(v.statistics.viewCount || 0);
+        const isS = isShorts(v.contentDetails.duration);
+
+        // Rates: Long = 2 KRW, Shorts = 0.15 KRW
+        const rate = isS ? 0.15 : 2.0;
+        totalRev += (views * rate);
+    });
+    return Math.floor(totalRev);
+}
+
+function formatCurrency(num) {
+    return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(num);
 }
 
 function processDailyStats(videos) {
