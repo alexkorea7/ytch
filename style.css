@@ -595,6 +595,199 @@ input:focus {
     padding: 0.5rem;
 }
 
-.delete-fav-btn:hover {
-    color: #e53e3e;
+/* ... existing code ... */
+
+/* Top Music Section */
+.top-music-section {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.music-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0.5rem;
+}
+
+.music-section-header h3 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.music-cards-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: start;
+    flex-wrap: wrap;
+}
+
+.music-card {
+    flex: 1;
+    min-width: 250px;
+    background-color: var(--bg-hover);
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    transition: transform 0.2s;
+    border: 1px solid transparent;
+}
+
+.music-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-color);
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.music-thumb-placeholder {
+    width: 50px;
+    height: 50px;
+    background-color: #333;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.music-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.music-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.music-artist {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.music-count {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    font-weight: 500;
+    margin-top: 0.25rem;
+}
+
+.view-all-music-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.view-all-music-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Table Enhancements */
+.video-type-icon {
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    font-size: 1.1rem;
+}
+
+.music-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.music-badge.has-music {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+    background-color: rgba(3, 199, 90, 0.05);
+}
+
+/* Modal List */
+.music-list-detailed {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.music-list-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    gap: 1rem;
+}
+
+.music-list-rank {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-light);
+    width: 30px;
+    text-align: center;
+}
+
+.music-list-item:nth-child(1) .music-list-rank {
+    color: gold;
+}
+
+.music-list-item:nth-child(2) .music-list-rank {
+    color: silver;
+}
+
+.music-list-item:nth-child(3) .music-list-rank {
+    color: #cd7f32;
+}
+
+/* Download Button in Modal */
+.btn-download {
+    background-color: #3b82f6;
+    /* Blue */
+    color: white;
+    margin-right: auto;
+    /* Push to left if flex */
+}
+
+.btn-download:hover {
+    background-color: #2563eb;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }

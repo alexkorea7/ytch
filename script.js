@@ -315,7 +315,9 @@ function closeModal() {
     elements.modalIframe.src = '';
     elements.modal.classList.add('hidden');
     const favContainer = document.getElementById('modal-favorites-container');
+    const musContainer = document.getElementById('modal-music-container');
     if (favContainer) favContainer.classList.add('hidden');
+    if (musContainer) musContainer.classList.add('hidden');
 }
 
 // --- Core Logic ---
@@ -358,9 +360,14 @@ async function handleAnalyze() {
         // Save to state
         state.videos = videos;
 
+        // Music Analysis
+        const musicStats = processMusicStats(videos);
+        state.musicStats = musicStats;
+
         // Render Profile
         renderChannelInfo(channelData, videos);
         renderCharts(videos);
+        renderMusicSection(musicStats);
 
         // Initial Sort (Date Desc)
         handleSort('date', 'desc');
@@ -543,6 +550,166 @@ async function fetchVideoComments(videoId) {
 
 
 // --- Render Functions ---
+
+// --- Music & Shorts Logic ---
+
+function isShorts(durationIso) {
+    const seconds = parseDuration(durationIso);
+    return seconds <= 60;
+}
+
+function parseMusicFromDescription(description) {
+    if (!description) return null;
+
+    // Common patterns for music credits
+    const patterns = [
+        /(?:Music|Song|Track|BGM|음악|노래)\s*[:\-]\s*(.+)/i,
+        /🎵\s*(.+)/,
+        /♪\s*(.+)/
+    ];
+
+    for (const pattern of patterns) {
+        const match = description.match(pattern);
+        if (match && match[1]) {
+            // Clean up: remove typical suffix junk if present (e.g. by Artist)
+            let raw = match[1].split(/\n/)[0].trim(); // Take first line
+            // simple cleanup
+            return raw;
+        }
+    }
+
+    // Check for "Music in this video" auto-generated block is hard without raw HTML, 
+    // but often description contains "Song: Title - Artist"
+    return null;
+}
+
+function processMusicStats(videos) {
+    const stats = {};
+
+    videos.forEach(v => {
+        const musicName = parseMusicFromDescription(v.snippet.description);
+        if (musicName) {
+            // Normalize simple string (lowercase, remove special chars?) - optional
+            const key = musicName.toLowerCase().trim();
+            if (!stats[key]) {
+                stats[key] = {
+                    title: musicName, // Keep original casing
+                    count: 0,
+                    exampleVideoId: v.id,
+                    exampleThumb: v.snippet.thumbnails.default?.url
+                };
+            }
+            stats[key].count++;
+        }
+    });
+
+    // Convert to array and sort
+    return Object.values(stats).sort((a, b) => b.count - a.count);
+}
+
+
+// --- Render Functions ---
+
+function renderMusicSection(musicStats) {
+    const section = document.getElementById('top-music-section');
+    if (!section) return;
+
+    if (musicStats.length === 0) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    section.classList.remove('hidden');
+
+    // Header
+    let html = `
+        <div class="music-section-header">
+            <h3>🎵 가장 많이 사용된 음악 (Top 3)</h3>
+            <button id="view-all-music-btn" class="view-all-music-btn">
+                전체보기 <i data-lucide="chevron-right"></i>
+            </button>
+        </div>
+        <div class="music-cards-container">
+    `;
+
+    // Top 3 Cards
+    const top3 = musicStats.slice(0, 3);
+
+    if (top3.length === 0) {
+        html += `<p style="color:var(--text-secondary);">감지된 음악 정보가 없습니다.</p>`;
+    } else {
+        top3.forEach((m, idx) => {
+            html += `
+                <div class="music-card" onclick="openMusicModal()">
+                    <div class="music-thumb-placeholder">
+                        <i data-lucide="music"></i>
+                    </div>
+                    <div class="music-info">
+                        <div class="music-title" title="${m.title}">${m.title}</div>
+                        <div class="music-artist">사용된 영상: ${m.count}개</div>
+                    </div>
+                    <div class="music-count">#${idx + 1}</div>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div>`;
+    section.innerHTML = html;
+
+    const viewAllBtn = document.getElementById('view-all-music-btn');
+    if (viewAllBtn) {
+        viewAllBtn.addEventListener('click', () => openMusicModal(musicStats));
+    }
+
+    // Re-init icons for the inserted HTML
+    lucide.createIcons();
+}
+
+function openMusicModal(musicStats) {
+    // If passed arg is event (click), ignore or use state
+    // We might need to store calculated stats in state to access here if passed cleanly
+    // But for now let's assume we pass it or retrieve from state if we stored it. 
+    // Let's rely on state storage for robustness.
+    const stats = state.musicStats || musicStats || [];
+
+    const vidContainer = document.getElementById('modal-video-container');
+    const comContainer = document.getElementById('modal-comments-container');
+    const favContainer = document.getElementById('modal-favorites-container');
+    const musContainer = document.getElementById('modal-music-container');
+
+    if (vidContainer) vidContainer.classList.add('hidden');
+    if (comContainer) comContainer.classList.add('hidden');
+    if (favContainer) favContainer.classList.add('hidden');
+    if (musContainer) musContainer.classList.remove('hidden');
+
+    const list = document.getElementById('music-list');
+    list.innerHTML = '';
+
+    if (stats.length === 0) {
+        list.innerHTML = '<p class="text-center">분석된 음악 정보가 없습니다.</p>';
+    } else {
+        stats.slice(0, 50).forEach((m, idx) => { // Show max 50
+            const div = document.createElement('div');
+            div.className = 'music-list-item';
+            div.innerHTML = `
+                <div class="music-list-rank">${idx + 1}</div>
+                <div style="flex:1">
+                    <div style="font-weight:600; font-size:1rem;">${m.title}</div>
+                    <div style="color:var(--text-secondary); font-size:0.85rem;">총 ${m.count}개 영상에서 사용됨</div>
+                </div>
+                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(m.title)}" target="_blank" class="btn-icon">
+                    <i data-lucide="search"></i>
+                </a>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    elements.modal.classList.remove('hidden');
+    lucide.createIcons();
+}
+
 
 function renderChannelInfo(data, videos) {
     const snippet = data.snippet;
@@ -769,6 +936,22 @@ function renderVideoList(videos) {
         const durationSec = parseDuration(contentDetails.duration);
         const durationStr = formatDuration(durationSec);
 
+        // Shorts Check
+        const isShortsVideo = isShorts(contentDetails.duration);
+        const typeIcon = isShortsVideo
+            ? '<i data-lucide="smartphone" class="video-type-icon" style="color:var(--accent-color)" title="Shorts"></i>'
+            : '<i data-lucide="monitor" class="video-type-icon" style="color:var(--text-light)" title="일반 동영상"></i>';
+
+        // Music Check
+        const musicName = parseMusicFromDescription(snippet.description);
+        let musicBadge = '-';
+        if (musicName) {
+            // Trim to 3 chars for display
+            let display = musicName.substring(0, 3);
+            if (musicName.length > 3) display += '..';
+            musicBadge = `<span class="music-badge has-music" title="${musicName}">${display}</span>`;
+        }
+
         const tr = document.createElement('tr');
 
         // Comment count clickable?
@@ -777,7 +960,12 @@ function renderVideoList(videos) {
         tr.innerHTML = `
             <td>${index + 1}</td>
             <td><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;"><img src="${thumbnail}" class="video-thumbnail-small" alt="thumb"></div></td>
-            <td class="title-cell"><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;" class="video-title-link">${snippet.title}</div></td>
+            <td class="title-cell">
+                <div onclick="openVideoModal('${video.id}')" style="cursor:pointer;" class="video-title-link">
+                    ${typeIcon} ${snippet.title}
+                </div>
+            </td>
+            <td>${musicBadge}</td>
             <td>${durationStr}</td>
             <td>${new Date(snippet.publishedAt).toLocaleDateString()}</td>
             <td>${formatNumber(stats.viewCount || 0)}</td>
@@ -787,6 +975,8 @@ function renderVideoList(videos) {
 
         elements.videoTableBody.appendChild(tr);
     });
+
+    lucide.createIcons();
 }
 
 function openVideoModal(videoId) {
