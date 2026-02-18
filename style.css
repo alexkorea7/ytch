@@ -1718,15 +1718,21 @@ input:focus {
         width: 100% !important;
         gap: 0.5rem !important;
         box-sizing: border-box !important;
+        padding: 0 1px;
+        /* Tiny buffer to prevent edge clipping */
     }
 
-    .search-bar-wrapper input {
+    .search-bar-wrapper input#channel-url-input {
         width: 100% !important;
         flex: 1 1 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
         order: 1;
         box-sizing: border-box !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 0 !important;
+        /* Square corners as requested */
+        -webkit-appearance: none;
     }
 
     .search-bar-wrapper button {
@@ -1745,20 +1751,19 @@ input:focus {
         gap: 0.5rem !important;
     }
 
+    /* Wrapper for API Key Button */
     .api-key-wrapper {
         display: flex !important;
-        /* Key fix: flex, not inline-flex */
+        align-items: center !important;
+        justify-content: center !important;
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
         width: 40px !important;
-        /* Force wrapper width */
         height: 32px !important;
-        align-items: center !important;
-        justify-content: center !important;
     }
 
-    /* Force all 3 buttons to be identical squares */
+    /* Force all 3 buttons (Upload, Download, API Key) to be identical squares */
     .settings-group>.btn,
     .api-key-wrapper .btn {
         width: 40px !important;
@@ -1767,43 +1772,11 @@ input:focus {
         padding: 0 !important;
         margin: 0 !important;
         display: flex !important;
-        /* Flex allows perfect centering */
         align-items: center !important;
         justify-content: center !important;
         line-height: 1 !important;
         box-sizing: border-box !important;
         border-radius: 4px !important;
-        /* Ensure consistent radius */
-    }
-
-    /* 1. Search Bar: Input full width, Buttons next line */
-    .search-bar-wrapper {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        width: 100% !important;
-        gap: 0.5rem !important;
-        box-sizing: border-box !important;
-        padding: 0 1px;
-        /* Tiny buffer to prevent edge clipping */
-    }
-
-    .search-bar-wrapper input#channel-url-input {
-        width: 100% !important;
-        flex: 1 1 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        order: 1;
-        box-sizing: border-box !important;
-        border: 1px solid var(--border-color) !important;
-        /* Force explicit border on all sides */
-        border-radius: 8px !important;
-    }
-
-    .search-bar-wrapper button {
-        flex: 1 !important;
-        margin: 0 !important;
-        order: 2;
-        width: auto !important;
     }
 
     /* 3. Hide Text in API Key Button */
@@ -1811,12 +1784,11 @@ input:focus {
         display: none !important;
     }
 
-    /* 4. Remove any conflicting margins on icons */
+    /* 4. Icon Sizing */
     .btn i,
     .btn svg {
         margin: 0 !important;
         width: 18px !important;
-        /* Force icon size */
         height: 18px !important;
     }
 }
