@@ -74,13 +74,7 @@ const elements = {
     newCategoryInput: document.getElementById('new-category-input'),
     addCategoryBtn: document.getElementById('add-category-btn'),
 
-    // Custom Image Elements
-    customImageInput: document.getElementById('custom-image-input'),
-    addCustomImageBtn: document.getElementById('add-custom-image-btn'),
-    removeCustomImageBtn: document.getElementById('remove-custom-image-btn'),
-    customImageDisplay: document.getElementById('custom-image-display'),
-    customImageImg: document.getElementById('custom-image-img'),
-    customImageSection: document.querySelector('.custom-image-section'),
+    // Custom Image Elements - REMOVED
 
     recentSearchesContainer: document.getElementById('recent-searches-container') // New
 };
@@ -229,19 +223,7 @@ function init() {
     if (elements.importConfigBtn) elements.importConfigBtn.addEventListener('click', () => elements.configUploadInput.click());
     if (elements.configUploadInput) elements.configUploadInput.addEventListener('change', importConfig);
 
-    // Custom Image Listeners
-    if (elements.addCustomImageBtn) {
-        elements.addCustomImageBtn.addEventListener('click', () => elements.customImageInput.click());
-    }
-    if (elements.customImageInput) {
-        elements.customImageInput.addEventListener('change', handleCustomImageUpload);
-    }
-    if (elements.removeCustomImageBtn) {
-        elements.removeCustomImageBtn.addEventListener('click', removeCustomImage);
-    }
-
-    // Load Saved Custom Image
-    loadCustomImage();
+    // Custom Image Listeners - REMOVED
 
     // Favorites Category Add
     if (elements.addCategoryBtn) {
@@ -257,8 +239,7 @@ function init() {
 window.resetToHome = function () {
     elements.resultsSection.classList.add('hidden');
 
-    // Reload image (handles default vs custom and visibility)
-    loadCustomImage();
+    // Reload image (Removed part of feature deletion)
 
     if (elements.recentSearchesContainer) elements.recentSearchesContainer.classList.remove('hidden'); // Show Recents
     renderRecentSearches();
@@ -310,63 +291,7 @@ function addToRecentSearches(term) {
     renderRecentSearches();
 }
 
-// --- Custom Image Functions ---
-function handleCustomImageUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const dataUrl = e.target.result;
-        localStorage.setItem('yt_custom_image', dataUrl);
-        displayCustomImage(dataUrl);
-    };
-    reader.readAsDataURL(file);
-}
-
-function removeCustomImage() {
-    localStorage.removeItem('yt_custom_image');
-    elements.customImageDisplay.classList.add('hidden');
-    elements.removeCustomImageBtn.classList.add('hidden');
-    if (elements.customImageInput) elements.customImageInput.value = '';
-}
-
-function loadCustomImage() {
-    const saved = localStorage.getItem('yt_custom_image');
-    if (saved) {
-        displayCustomImage(saved);
-    } else {
-        // Try to load default image
-        displayCustomImage('default_cover.jpg');
-    }
-}
-
-function displayCustomImage(src) {
-    const img = elements.customImageImg;
-    if (!img) return;
-
-    // Reset hidden state to allow onload/onerror to decide
-    // img.classList.remove('hidden'); 
-
-    img.onload = function () {
-        if (elements.customImageDisplay) elements.customImageDisplay.classList.remove('hidden');
-
-        // Only show remove button if it's NOT the default image
-        if (src.includes('default_cover.jpg')) {
-            if (elements.removeCustomImageBtn) elements.removeCustomImageBtn.classList.add('hidden');
-        } else {
-            if (elements.removeCustomImageBtn) elements.removeCustomImageBtn.classList.remove('hidden');
-        }
-    };
-
-    img.onerror = function () {
-        // If image fails to load (e.g. default_cover.jpg doesn't exist), hide the section
-        if (elements.customImageDisplay) elements.customImageDisplay.classList.add('hidden');
-        if (elements.removeCustomImageBtn) elements.removeCustomImageBtn.classList.add('hidden');
-    };
-
-    img.src = src;
-}
+// --- Custom Image Functions REMOVED ---
 
 function loadFavoritesState() {
     try {
@@ -2105,7 +2030,7 @@ function exportConfig() {
         favorites: JSON.parse(localStorage.getItem('yt_favorites') || '[]'),
         favoritesCategories: JSON.parse(localStorage.getItem('yt_favorites_categories') || '["기본"]'),
         customShortcuts: JSON.parse(localStorage.getItem('yt_custom_shortcuts') || '[]'),
-        customImage: localStorage.getItem('yt_custom_image') || ''
+        customShortcuts: JSON.parse(localStorage.getItem('yt_custom_shortcuts') || '[]')
     };
 
     const dataStr = JSON.stringify(config, null, 2);
@@ -2139,7 +2064,7 @@ function importConfig(event) {
             if (config.favorites) localStorage.setItem('yt_favorites', JSON.stringify(config.favorites));
             if (config.favoritesCategories) localStorage.setItem('yt_favorites_categories', JSON.stringify(config.favoritesCategories));
             if (config.customShortcuts) localStorage.setItem('yt_custom_shortcuts', JSON.stringify(config.customShortcuts));
-            if (config.customImage) localStorage.setItem('yt_custom_image', config.customImage);
+            if (config.customShortcuts) localStorage.setItem('yt_custom_shortcuts', JSON.stringify(config.customShortcuts));
 
             alert('설정이 성공적으로 복구되었습니다. 페이지를 새로고침합니다.');
             location.reload();

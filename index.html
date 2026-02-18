@@ -38,33 +38,26 @@
                         <button id="add-shortcut-btn" class="social-btn add-btn" title="바로가기 추가">
                             <i data-lucide="plus"></i>
                         </button>
-                    </div>
-                </div>
-            </div>
-            <!-- API Key & Settings Section -->
-            <div class="settings-group">
-                <input type="file" id="config-upload" accept=".json" class="hidden" />
 
-                <button id="import-config-btn" class="btn btn-secondary btn-sm btn-icon-only" title="설정 가져오기 (Upload)">
-                    <i data-lucide="upload"></i>
-                </button>
-                <button id="export-config-btn" class="btn btn-secondary btn-sm btn-icon-only"
-                    title="설정 내보내기 (Download)">
-                    <i data-lucide="download"></i>
-                </button>
-
-                <div class="api-key-wrapper">
-                    <button id="toggle-api-key-btn" class="btn btn-secondary btn-sm" title="API Key 설정">
-                        <i data-lucide="key"></i> <span class="desktop-text">API Key</span>
-                    </button>
-                    <div id="api-key-container" class="api-key-dropdown hidden">
-                        <div class="api-key-inner">
-                            <input type="password" id="api-key-input" placeholder="API Key 입력" />
-                            <button id="save-api-key" class="btn btn-primary btn-sm">저장</button>
+                        <!-- Moved API Key Button (Header) -->
+                        <div class="api-key-header-wrapper" style="position: relative;">
+                            <button id="toggle-api-key-btn" class="social-btn" title="API Key 설정">
+                                <i data-lucide="key"></i>
+                            </button>
+                            <!-- Mobile Drawer / Desktop Dropdown -->
+                            <div id="api-key-container" class="api-key-dropdown hidden">
+                                <div class="api-key-inner">
+                                    <input type="password" id="api-key-input" placeholder="API Key 입력" />
+                                    <button id="save-api-key" class="btn btn-primary btn-sm">저장</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- Old Settings Group Removed -->
+    </div>
+    </header>
     </div>
     </header>
 
@@ -86,23 +79,7 @@
             <div id="error-message" class="error-message hidden"></div>
         </section>
 
-        <!-- Custom Image Section (New) -->
-        <section class="custom-image-section">
-            <div id="custom-image-display" class="custom-image-display hidden">
-                <div class="picture-frame">
-                    <img id="custom-image-img" src="" alt="Custom Display" />
-                </div>
-            </div>
-            <div class="custom-image-controls">
-                <input type="file" id="custom-image-input" accept="image/*" class="hidden" />
-                <button id="add-custom-image-btn" class="btn btn-secondary btn-sm" title="이미지 꾸미기">
-                    <i data-lucide="image"></i> 이미지 추가/변경
-                </button>
-                <button id="remove-custom-image-btn" class="btn btn-secondary btn-sm hidden" title="이미지 삭제">
-                    <i data-lucide="trash-2"></i>
-                </button>
-            </div>
-        </section>
+        <!-- Custom Image Section REMOVED -->
 
         <!-- Loading Indicator -->
         <div id="loading-indicator" class="loading-indicator hidden">
@@ -292,7 +269,22 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Footer Settings (Import/Export) -->
+    <footer class="app-footer">
+        <div class="footer-divider"></div>
+        <div class="settings-buttons">
+            <input type="file" id="config-upload" accept=".json" class="hidden" />
+            <button id="import-config-btn" class="btn btn-secondary btn-sm" title="설정 가져오기">
+                <i data-lucide="upload"></i> <span class="desktop-label">설정 가져오기</span>
+            </button>
+            <button id="export-config-btn" class="btn btn-secondary btn-sm" title="설정 내보내기">
+                <i data-lucide="download"></i> <span class="desktop-label">설정 내보내기</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden"></div>
     <script>
         lucide.createIcons();
     </script>

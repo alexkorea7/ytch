@@ -1440,43 +1440,7 @@ input:focus {
 }
 
 /* Custom Image Section */
-.custom-image-section {
-    max-width: 700px;
-    margin: 0.25rem auto 1rem;
-    /* Further reduced */
-    /* Reduced top/bottom margins */
-    text-align: center;
-}
-
-.custom-image-controls {
-    display: flex;
-    justify-content: center;
-    /* Centered */
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-    /* Reduced bottom margin */
-}
-
-.picture-frame {
-    display: inline-block;
-    padding: 10px;
-    background: white;
-    border: 1px solid #ddd;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
-    max-width: 100%;
-    /* Responsive fix */
-    box-sizing: border-box;
-    /* Include padding in width */
-}
-
-.picture-frame img {
-    max-width: 1024px;
-    width: 100%;
-    height: auto;
-    display: block;
-    object-fit: contain;
-}
+/* Custom Image Styles Removed */
 
 /* Favorites Category Tabs as Buttons */
 /* Favorites Category Tabs as Buttons */
