@@ -1787,6 +1787,15 @@ input:focus {
         border-radius: 4px !important;
     }
 
+    /* FIX: Lift API Key button specifically to prevent cut-off */
+    .api-key-wrapper .btn {
+        margin-top: -4px !important;
+        /* Pull button up */
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        height: 34px !important;
+    }
+
     /* 3. Show API Key Text */
     .desktop-text {
         display: inline-block !important;
