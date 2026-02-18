@@ -1742,13 +1742,20 @@ input:focus {
         width: auto !important;
     }
 
-    /* 2. Settings Buttons: Uniform Size & Alignment */
+    /* 2. Settings Buttons: Forced Single Line & Tight vertical spacing */
     .settings-group {
         display: flex !important;
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
+        /* Force single line */
         align-items: center !important;
         justify-content: center !important;
-        gap: 0.5rem !important;
+        gap: 0.25rem !important;
+        height: 38px !important;
+        /* Tight container height (34px btn + 2px borders/space) */
+        width: 100% !important;
+        margin: 0.25rem 0 !important;
+        /* Balanced top/bottom spacing */
+        overflow: hidden !important;
     }
 
     /* Wrapper for API Key Button */
@@ -1760,21 +1767,17 @@ input:focus {
         padding: 0 !important;
         border: none !important;
         width: auto !important;
-        /* Flexible width */
         height: 34px !important;
-        /* Fixed height */
     }
 
-    /* Force height consistency but allow width to adapt */
+    /* Force height consistency */
     .settings-group>.btn,
     .api-key-wrapper .btn {
         width: auto !important;
         min-width: 34px !important;
-        /* Minimum square size for icons */
         height: 34px !important;
         min-height: 34px !important;
         padding: 0 0.5rem !important;
-        /* Add padding for text */
         margin: 0 !important;
         display: flex !important;
         align-items: center !important;
