@@ -1379,13 +1379,72 @@ input:focus {
         width: 100%;
         justify-content: center;
     }
+
+    /* Mobile: Search Bar Wrapping */
+    /* Mobile: Search Bar Wrapping (Forced) */
+    .search-bar-wrapper {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .search-bar-wrapper input {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        margin-right: 0 !important;
+        order: 1;
+    }
+
+    .search-bar-wrapper button {
+        flex: 1 !important;
+        order: 2;
+    }
+
+    /* Mobile: Fix API Key Alignment */
+    /* Mobile: Fix API Key Alignment (Forced) */
+    /* Mobile: Fix API Key Alignment (Refined) */
+    .settings-group {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .api-key-wrapper {
+        height: 32px !important;
+        /* Standardize height */
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        vertical-align: middle !important;
+    }
+
+    /* Target all buttons within settings-group equally */
+    .settings-group>.btn,
+    .api-key-wrapper .btn {
+        height: 32px !important;
+        min-height: 32px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 0.8rem !important;
+        margin: 0 !important;
+    }
+
+    /* Hide API Key text on mobile */
+    .desktop-text {
+        display: none !important;
+    }
 }
 
 /* Custom Image Section */
 .custom-image-section {
     max-width: 700px;
-    margin: 1rem auto 2rem;
-    /* Reduced top margin from 0 (implicit) or previous value */
+    margin: 0.25rem auto 1rem;
+    /* Further reduced */
+    /* Reduced top/bottom margins */
     text-align: center;
 }
 
@@ -1405,7 +1464,10 @@ input:focus {
     border: 1px solid #ddd;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
-    /* Slight radius for modern feel */
+    max-width: 100%;
+    /* Responsive fix */
+    box-sizing: border-box;
+    /* Include padding in width */
 }
 
 .picture-frame img {
@@ -1642,4 +1704,79 @@ input:focus {
 
 .recent-search-delete:hover {
     color: var(--error-color);
+}
+
+/* =========================================
+   DEFINITIVE MOBILE FIXES (Do not remove)
+   ========================================= */
+@media (max-width: 768px) {
+
+    /* 1. Search Bar: Input full width, Buttons next line */
+    .search-bar-wrapper {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        gap: 0.5rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .search-bar-wrapper input {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        order: 1;
+        box-sizing: border-box !important;
+    }
+
+    .search-bar-wrapper button {
+        flex: 1 !important;
+        margin: 0 !important;
+        order: 2;
+        width: auto !important;
+    }
+
+    /* 2. Settings Buttons: Uniform Size & Alignment */
+    .settings-group {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+    }
+
+    .api-key-wrapper {
+        display: inline-flex !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        height: 32px !important;
+        align-items: center !important;
+    }
+
+    /* Force all 3 buttons to be identical squares */
+    .settings-group>.btn,
+    .api-key-wrapper .btn {
+        width: 40px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 3. Hide Text in API Key Button */
+    .desktop-text {
+        display: none !important;
+    }
+
+    /* 4. Remove any conflicting margins on icons */
+    .btn i,
+    .btn svg {
+        margin: 0 !important;
+    }
 }
