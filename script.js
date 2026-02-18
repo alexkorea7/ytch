@@ -1497,7 +1497,7 @@ function renderCharts(videos) {
         PAGE_SIZE = 12; // Show 1 year by default for monthly
     } else {
         chartData = processDailyStats(videos);
-        PAGE_SIZE = isMobile ? 7 : 30; // 7 days for mobile, 30 for desktop
+        PAGE_SIZE = isMobile ? 7 : 14; // 7 days for mobile, 14 for desktop (was 30)
     }
 
     const totalItems = chartData.length;
