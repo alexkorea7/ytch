@@ -233,6 +233,11 @@ function init() {
     }
 
     lucide.createIcons();
+
+    const closeCatModalBtn = document.querySelector('.close-category-select');
+    if (closeCatModalBtn) {
+        closeCatModalBtn.addEventListener('click', closeCategorySelectModal);
+    }
 }
 
 // --- Recent Searches & Home ---
@@ -249,20 +254,41 @@ function renderRecentSearches() {
     const container = elements.recentSearchesContainer;
     if (!container) return;
 
-    const recents = JSON.parse(localStorage.getItem('yt_recent_searches') || '[]');
+    let recents = JSON.parse(localStorage.getItem('yt_recent_searches') || '[]');
     container.innerHTML = '';
 
     if (recents.length === 0) return;
 
-    recents.forEach(term => {
-        const span = document.createElement('span');
+    recents.forEach(item => {
+        // Backward compatibility: handle string item
+        let url = item;
+        let title = item;
+        let thumb = '';
+
+        if (typeof item === 'object') {
+            url = item.url;
+            title = item.title || url;
+            thumb = item.thumbnail || '';
+        }
+
+        const span = document.createElement('div'); // Changed to div for better styling
         span.className = 'recent-search-item';
-        span.innerHTML = `
-            <span onclick="loadRecentSearch('${term}')">${term}</span>
-            <button class="recent-search-delete" onclick="deleteRecentSearch(event, '${term}')">
-                <i data-lucide="x" style="width:14px; height:14px;"></i>
+
+        let html = '';
+        if (thumb) {
+            html += `<img src="${thumb}" class="recent-thumb" alt="ch">`;
+        }
+
+        html += `
+            <div class="recent-info" onclick="loadRecentSearch('${url}')">
+                <span class="recent-title">${title}</span>
+                <!-- <span class="recent-url">${url}</span> -->
+            </div>
+            <button class="recent-search-delete" onclick="deleteRecentSearch(event, '${url}')">
+                <i data-lucide="x"></i>
             </button>
         `;
+        span.innerHTML = html;
         container.appendChild(span);
     });
     lucide.createIcons();
@@ -276,17 +302,32 @@ window.loadRecentSearch = function (term) {
 window.deleteRecentSearch = function (e, term) {
     e.stopPropagation();
     let recents = JSON.parse(localStorage.getItem('yt_recent_searches') || '[]');
-    recents = recents.filter(r => r !== term);
+    // Filter by url (handle string or object)
+    recents = recents.filter(r => {
+        const rUrl = (typeof r === 'object') ? r.url : r;
+        return rUrl !== term;
+    });
     localStorage.setItem('yt_recent_searches', JSON.stringify(recents));
     renderRecentSearches();
 };
 
-function addToRecentSearches(term) {
+function addToRecentSearches(url, title, thumbnail) {
     let recents = JSON.parse(localStorage.getItem('yt_recent_searches') || '[]');
-    // Remove if exists to move to top
-    recents = recents.filter(r => r !== term);
-    recents.unshift(term);
-    if (recents.length > 5) recents.pop(); // Keep max 5
+
+    // Remove if exists
+    recents = recents.filter(r => {
+        const rUrl = (typeof r === 'object') ? r.url : r;
+        return rUrl !== url;
+    });
+
+    // Add new object
+    recents.unshift({
+        url: url,
+        title: title || url,
+        thumbnail: thumbnail || ''
+    });
+
+    if (recents.length > 25) recents.pop(); // Keep max 25
     localStorage.setItem('yt_recent_searches', JSON.stringify(recents));
     renderRecentSearches();
 }
@@ -311,40 +352,97 @@ function toggleFavorite() {
 
     const idx = state.favorites.findIndex(f => f.id === state.channelId);
     if (idx >= 0) {
-        // Remove
-        state.favorites.splice(idx, 1);
-        alert('즐겨찾기에서 제거되었습니다.');
-    } else {
-        // Add - Prompt for Category
-        let categories = JSON.parse(localStorage.getItem('yt_favorites_categories') || '["기본"]');
-        let selectedCat = '기본';
-
-        // Simple Prompt for now (can be improved to modal later)
-        const userCat = prompt(`즐겨찾기 카테고리를 선택하세요:\n${categories.join(', ')}\n(새 카테고리를 입력하면 생성됩니다)`, state.currentCategoryFilter === 'ALL' ? '기본' : state.currentCategoryFilter);
-
-        if (userCat) {
-            selectedCat = userCat.trim();
-            if (!categories.includes(selectedCat)) {
-                categories.push(selectedCat);
-                localStorage.setItem('yt_favorites_categories', JSON.stringify(categories));
-            }
-
-            state.favorites.push({
-                id: state.channelId,
-                title: elements.channelTitle.textContent,
-                url: elements.urlInput.value,
-                thumbnail: elements.channelThumb.src,
-                category: selectedCat
-            });
-            updateFavoriteBtnState(); // Update icon immediately
-            alert(`'${selectedCat}' 카테고리에 추가되었습니다.`);
-        } else {
-            return; // Cancelled
+        // Remove existing
+        if (confirm('즐겨찾기에서 제거하시겠습니까?')) {
+            state.favorites.splice(idx, 1);
+            localStorage.setItem('yt_favorites', JSON.stringify(state.favorites));
+            updateFavoriteBtnState();
+            renderFavoritesList(); // Refresh list if open
         }
+    } else {
+        // Add - Open Modal
+        openCategorySelectModal();
     }
+}
+
+function openCategorySelectModal() {
+    const modal = document.getElementById('category-select-modal');
+    const container = document.getElementById('category-selection-list');
+    if (!modal || !container) return;
+
+    let categories = JSON.parse(localStorage.getItem('yt_favorites_categories') || '["기본"]');
+    container.innerHTML = '';
+
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-outline'; // Will style in css
+        btn.style.width = '100%';
+        btn.style.justifyContent = 'flex-start'; // Align text left
+        btn.innerHTML = `<i data-lucide="folder"></i> ${cat}`;
+        btn.onclick = () => confirmAddToFavorite(cat);
+        container.appendChild(btn);
+    });
+
+    // Handle Quick Add
+    const quickBtn = document.getElementById('quick-add-category-btn');
+    const quickInput = document.getElementById('quick-new-category');
+
+    // Remove old listeners to prevent stacking (simple clone method)
+    if (quickBtn) {
+        const newBtn = quickBtn.cloneNode(true);
+        quickBtn.parentNode.replaceChild(newBtn, quickBtn);
+        newBtn.onclick = () => {
+            const name = document.getElementById('quick-new-category').value.trim();
+            if (name) {
+                let currentCats = JSON.parse(localStorage.getItem('yt_favorites_categories') || '["기본"]');
+                if (!currentCats.includes(name)) {
+                    currentCats.push(name);
+                    localStorage.setItem('yt_favorites_categories', JSON.stringify(currentCats));
+                    // Re-render list
+                    openCategorySelectModal();
+                    document.getElementById('quick-new-category').value = '';
+                } else {
+                    alert('이미 존재하는 카테고리입니다.');
+                }
+            }
+        };
+    }
+
+    // Show Modal
+    modal.classList.remove('hidden');
+    document.getElementById('modal-overlay').classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function confirmAddToFavorite(category) {
+    if (!state.channelId) return;
+
+    state.favorites.push({
+        id: state.channelId,
+        title: elements.channelTitle.textContent,
+        url: elements.urlInput.value,
+        thumbnail: elements.channelThumb.src,
+        category: category
+    });
 
     localStorage.setItem('yt_favorites', JSON.stringify(state.favorites));
     updateFavoriteBtnState();
+    closeCategorySelectModal();
+    alert(`'${category}'에 추가되었습니다.`);
+}
+
+function closeCategorySelectModal() {
+    const modal = document.getElementById('category-select-modal');
+    if (modal) modal.classList.add('hidden');
+
+    // Only hide overlay if no other modal (like universal modal) is using it?
+    // Current architect uses shared overlay.
+    // Check if universal modal is open (it shouldn't be if we are in analysis view, except maybe video modal?)
+    // Actually, universal modal is hidden when this one opens usually.
+    // But safely:
+    if (elements.modal.classList.contains('hidden')) {
+        document.getElementById('modal-overlay').classList.add('hidden');
+    }
 }
 
 function updateFavoriteBtnState() {
@@ -612,10 +710,10 @@ async function handleAnalyze() {
         const channelId = await resolveChannelId(url);
         state.channelId = channelId;
 
-        // Add to Recent Searches
-        addToRecentSearches(url);
-
         const channelData = await fetchChannelDetails(channelId);
+
+        // Add to Recent Searches (Rich Data)
+        addToRecentSearches(url, channelData.snippet.title, channelData.snippet.thumbnails.default.url);
 
         const uploadPlaylistId = channelData.contentDetails.relatedPlaylists.uploads;
 

@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css?v=layout_restore_1200_7">
+    <link rel="stylesheet" href="style.css?v=layout_fav_modal_10">
 </head>
 
 <body>
@@ -281,6 +281,27 @@
 
     <!-- Modals -->
     <div id="modal-overlay" class="modal-overlay hidden"></div>
+
+    <!-- Category Select Modal (Small) -->
+    <div id="category-select-modal" class="modal hidden" style="z-index: 1200;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2rem;">
+            <span class="close-modal close-category-select">&times;</span>
+            <h3 style="margin-bottom: 1.5rem;">즐겨찾기 카테고리 선택</h3>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem;">어느 폴더에 저장할까요?</p>
+
+            <div id="category-selection-list"
+                style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <!-- Buttons injected by Script -->
+            </div>
+
+            <div class="divider" style="width:100%; height:1px; margin: 1rem 0;"></div>
+
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="quick-new-category" placeholder="새 카테고리 만들기" style="flex:1;">
+                <button id="quick-add-category-btn" class="btn btn-secondary btn-sm">+</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
     <script>
