@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css?v=debug_api_11">
+    <link rel="stylesheet" href="style.css?v=chart_layout_flat_16">
 </head>
 
 <body>
@@ -157,19 +157,22 @@
                 <table class="video-table">
                     <thead>
                         <tr>
-                            <th width="60">No.</th>
-                            <th width="80">썸네일</th>
-                            <th>영상 제목</th>
+                            <th width="60" class="mobile-hidden">No.</th>
+                            <th width="80" class="mobile-hidden">썸네일</th>
+                            <th>
+                                <span class="desktop-text">영상 제목</span>
+                                <span class="mobile-text">제목</span>
+                            </th>
                             <th width="80" class="sortable" data-sort="duration">길이 <i data-lucide="arrow-up-down"
                                     class="sort-icon"></i></th>
-                            <th width="120" class="sortable" data-sort="date">업로드일 <i data-lucide="arrow-up-down"
-                                    class="sort-icon"></i></th>
+                            <th width="120" class="sortable mobile-hidden" data-sort="date">업로드일 <i
+                                    data-lucide="arrow-up-down" class="sort-icon"></i></th>
                             <th width="100" class="sortable" data-sort="views">조회수 <i data-lucide="arrow-up-down"
                                     class="sort-icon"></i></th>
                             <th width="100" class="sortable" data-sort="likes">좋아요 <i data-lucide="arrow-up-down"
                                     class="sort-icon"></i></th>
-                            <th width="80" class="sortable" data-sort="comments">댓글 <i data-lucide="arrow-up-down"
-                                    class="sort-icon"></i></th>
+                            <th width="80" class="sortable mobile-hidden" data-sort="comments">댓글 <i
+                                    data-lucide="arrow-up-down" class="sort-icon"></i></th>
                         </tr>
                     </thead>
                     <tbody id="video-table-body">

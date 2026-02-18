@@ -1480,6 +1480,41 @@ input:focus {
     /* Context */
 }
 
+/* Explicit Chart Container Style */
+.chart-container {
+    height: 500px;
+    /* Increased further */
+    min-height: 500px;
+    width: 100%;
+    position: relative;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: 0 !important;
+    /* Square corners */
+    padding: 1.5rem;
+    padding-bottom: 4rem !important;
+    /* Extra bottom padding for X-axis labels */
+    margin-bottom: 2rem;
+    box-sizing: border-box;
+}
+
+/* Explicit Keyword Section Style */
+.keyword-section {
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: 0 !important;
+    /* Square corners */
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 .fav-category-tab:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
@@ -1879,5 +1914,97 @@ input:focus {
         width: 100%;
         border-radius: 0;
         -webkit-appearance: none;
+    }
+
+    /* Mobile Channel Info & Stats */
+    .channel-context {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+
+    .channel-profile {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .channel-profile p {
+        white-space: normal;
+        /* Allow wrapping */
+        max-width: 100%;
+    }
+
+    .channel-summary-pill {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        /* 2 Columns */
+        width: 100%;
+        gap: 0.75rem;
+    }
+
+    /* Hide dividers on mobile */
+    .channel-summary-pill .divider {
+        display: none;
+    }
+
+    /* Card-like stats */
+    .stat-pill {
+        text-align: center;
+        background: white;
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Make revenue/action take full width if needed, or keep grid */
+    .stat-pill.action-icons {
+        grid-column: span 2;
+        /* Full width for buttons */
+        justify-content: center;
+        margin-left: 0 !important;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    /* Mobile Table Optimization Level 2 */
+    .mobile-hidden {
+        display: none !important;
+    }
+
+    .desktop-date {
+        display: none !important;
+    }
+
+    .mobile-date {
+        display: inline !important;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    /* Hide Type Icon on Mobile */
+    .video-type-icon {
+        display: none !important;
+    }
+
+    /* Text Swapping */
+    .desktop-text {
+        display: none !important;
+    }
+
+    .mobile-text {
+        display: inline !important;
+    }
+}
+
+/* Desktop Only settings */
+@media (min-width: 769px) {
+
+    .mobile-date,
+    .mobile-text {
+        display: none !important;
     }
 }

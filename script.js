@@ -1203,7 +1203,7 @@ function openKeywordModal(keywords) {
                     <p class="chart-desc">채널 주인이 영상을 주로 업로드하는 시간대입니다.<br>이 시간에 맞춰 영상을 올리면 반응이 좋을 수 있습니다.</p>
                 </div>
                 <div class="chart-canvas-col">
-                    <div style="position: relative; height: 300px; width: 100%;">
+                    <div style="position: relative; height: 400px; width: 100%;">
                         <canvas id="uploadTimeChart"></canvas>
                     </div>
                 </div>
@@ -1218,7 +1218,7 @@ function openKeywordModal(keywords) {
                     <p class="chart-desc">제목의 길이를 분석합니다.<br>이 채널은 <strong>${titleStats.max}자</strong>까지 제목을 쓴 적이 있습니다.</p>
                 </div>
                 <div class="chart-canvas-col">
-                    <div style="position: relative; height: 300px; width: 100%;">
+                    <div style="position: relative; height: 400px; width: 100%;">
                         <canvas id="titleLenChart"></canvas>
                     </div>
                 </div>
@@ -1233,7 +1233,7 @@ function openKeywordModal(keywords) {
                     <p class="chart-desc">영상의 길이를 10초 단위로 분석합니다.<br>어떤 길이의 영상을 주로 만드는지 확인해보세요.</p>
                 </div>
                 <div class="chart-canvas-col">
-                    <div style="position: relative; height: 300px; width: 100%;">
+                    <div style="position: relative; height: 400px; width: 100%;">
                         <canvas id="videoDurationChart"></canvas>
                     </div>
                 </div>
@@ -1489,12 +1489,15 @@ function renderCharts(videos) {
     let chartData = [];
     let PAGE_SIZE = 30;
 
+    // Mobile Optimization: Show only 7 days on mobile
+    const isMobile = window.innerWidth < 768;
+
     if (state.chartTimeScale === 'monthly') {
         chartData = processMonthlyStats(videos);
         PAGE_SIZE = 12; // Show 1 year by default for monthly
     } else {
         chartData = processDailyStats(videos);
-        PAGE_SIZE = 30; // Show 30 days by default for daily
+        PAGE_SIZE = isMobile ? 7 : 30; // 7 days for mobile, 30 for desktop
     }
 
     const totalItems = chartData.length;
@@ -1533,8 +1536,15 @@ function renderCharts(videos) {
     if (nextBtn) nextBtn.style.opacity = state.chartPage <= 0 ? '0.3' : '1';
 
     if (rangeLabel && pageData.length > 0) {
-        const startStr = pageData[0].date;
-        const endStr = pageData[pageData.length - 1].date;
+        let startStr = pageData[0].date;
+        let endStr = pageData[pageData.length - 1].date;
+
+        // Simplify label on mobile
+        if (isMobile) {
+            startStr = startStr.substring(5);
+            endStr = endStr.substring(5);
+        }
+
         rangeLabel.textContent = `${startStr} ~ ${endStr}`;
     } else if (rangeLabel) {
         rangeLabel.textContent = '데이터 없음';
@@ -1567,7 +1577,14 @@ function renderCharts(videos) {
     state.uploadChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: pageData.map(d => d.date),
+            labels: pageData.map(d => {
+                // Format: YY.MM.DD (All screens)
+                // d.date is YYYY-MM-DD
+                if (state.chartTimeScale !== 'monthly' && d.date.length === 10) {
+                    return d.date.substring(2).replace(/-/g, '.');
+                }
+                return d.date;
+            }),
             datasets: [
                 {
                     label: state.chartTimeScale === 'monthly' ? '월별 업로드 수' : '일별 업로드 수',
@@ -1656,9 +1673,10 @@ function renderVideoList(videos) {
 
         // Shorts Check
         const isShortsVideo = isShorts(contentDetails.duration);
+        // Added class 'video-type-icon' for CSS toggling
         const typeIcon = isShortsVideo
-            ? '<i data-lucide="smartphone" class="video-type-icon" style="color:var(--accent-color)" title="Shorts"></i>'
-            : '<i data-lucide="monitor" class="video-type-icon" style="color:var(--text-light)" title="일반 동영상"></i>';
+            ? `<span class="video-type-icon"><i data-lucide="smartphone" style="color:var(--accent-color)" title="Shorts"></i></span>`
+            : `<span class="video-type-icon"><i data-lucide="monitor" style="color:var(--text-light)" title="일반 동영상"></i></span>`;
 
         const tr = document.createElement('tr');
 
@@ -1679,19 +1697,27 @@ function renderVideoList(videos) {
             viewClass = 'views-high'; // Red
         }
 
+        // Date Formatting
+        const dateObj = new Date(snippet.publishedAt);
+        const fullDate = dateObj.toLocaleDateString(); // YYYY. MM. DD. (KR)
+        const mobileDate = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`; // M/D
+
         tr.innerHTML = `
-            <td>${index + 1}</td>
-            <td><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;"><img src="${thumbnail}" class="video-thumbnail-small" alt="thumb"></div></td>
+            <td class="mobile-hidden">${index + 1}</td>
+            <td class="mobile-hidden"><div onclick="openVideoModal('${video.id}')" style="cursor:pointer;"><img src="${thumbnail}" class="video-thumbnail-small" alt="thumb"></div></td>
             <td class="title-cell">
                 <div onclick="openVideoModal('${video.id}')" style="cursor:pointer;" class="video-title-link">
                     ${typeIcon} ${snippet.title}
                 </div>
             </td>
             <td>${durationStr}</td>
-            <td>${new Date(snippet.publishedAt).toLocaleDateString()}</td>
+            <td class="mobile-hidden">
+                <span class="desktop-date">${fullDate}</span>
+                <span class="mobile-date">${mobileDate}</span>
+            </td>
             <td><span class="${viewClass}">${viewCountDisplay}</span></td>
             <td>${formatNumber(stats.likeCount || 0)}</td>
-            <td><span class="clickable-stat" onclick="openCommentModal('${video.id}')">${commentCount}</span></td>
+            <td class="mobile-hidden"><span class="clickable-stat" onclick="openCommentModal('${video.id}')">${commentCount}</span></td>
         `;
 
         elements.videoTableBody.appendChild(tr);
