@@ -1742,20 +1742,22 @@ input:focus {
         width: auto !important;
     }
 
-    /* 2. Settings Buttons: Forced Single Line & Tight vertical spacing */
+    /* 2. Settings Buttons: Flexible Alignment (Fix for clipping) */
     .settings-group {
         display: flex !important;
         flex-wrap: nowrap !important;
-        /* Force single line */
         align-items: center !important;
         justify-content: center !important;
         gap: 0.25rem !important;
-        height: 38px !important;
-        /* Tight container height (34px btn + 2px borders/space) */
         width: 100% !important;
+        height: auto !important;
+        /* Allow growing */
+        min-height: 40px !important;
         margin: 0.25rem 0 !important;
-        /* Balanced top/bottom spacing */
-        overflow: hidden !important;
+        overflow: visible !important;
+        /* Critical: Stop clipping */
+        padding: 2px 0 !important;
+        /* Buffer for shadows/borders */
     }
 
     /* Wrapper for API Key Button */
@@ -1767,33 +1769,33 @@ input:focus {
         padding: 0 !important;
         border: none !important;
         width: auto !important;
-        height: 34px !important;
+        height: auto !important;
     }
 
-    /* Force height consistency */
+    /* Unified Button Styles */
     .settings-group>.btn,
     .api-key-wrapper .btn {
         width: auto !important;
-        min-width: 34px !important;
-        height: 34px !important;
-        min-height: 34px !important;
+        min-width: 36px !important;
+        height: 36px !important;
+        min-height: 36px !important;
         padding: 0 0.5rem !important;
         margin: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        line-height: 1 !important;
+        line-height: normal !important;
         box-sizing: border-box !important;
         border-radius: 4px !important;
+        transform: none !important;
+        /* Reset visual hacks */
     }
 
-    /* FIX: Lift API Key button specifically to prevent cut-off */
+    /* Reset specific button positioning */
     .api-key-wrapper .btn {
-        margin-top: -4px !important;
-        /* Pull button up */
+        margin-top: 0 !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
-        height: 34px !important;
     }
 
     /* 3. Show API Key Text */
@@ -1801,6 +1803,7 @@ input:focus {
         display: inline-block !important;
         font-size: 0.85rem !important;
         margin-left: 0.3rem !important;
+        white-space: nowrap !important;
     }
 
     /* 4. Icon Sizing */
@@ -1809,5 +1812,6 @@ input:focus {
         margin: 0 !important;
         width: 18px !important;
         height: 18px !important;
+        display: block !important;
     }
 }
