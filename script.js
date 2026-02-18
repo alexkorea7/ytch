@@ -99,7 +99,8 @@ function init() {
 
     if (elements.saveKeyBtn) {
         elements.saveKeyBtn.addEventListener('click', () => {
-            const key = elements.apiKeyInput.value.trim();
+            // Aggressively remove all whitespace (including newlines, tabs)
+            const key = elements.apiKeyInput.value.replace(/\s+/g, '');
             if (key) {
                 state.apiKey = key;
                 localStorage.setItem('yt_api_key', key);
@@ -109,6 +110,23 @@ function init() {
             } else {
                 alert('API Key를 입력해주세요.');
             }
+        });
+    }
+
+    // Toggle Key Visibility
+    const toggleVisBtn = document.getElementById('toggle-key-visibility');
+    if (toggleVisBtn) {
+        toggleVisBtn.addEventListener('click', () => {
+            const input = elements.apiKeyInput;
+            const icon = toggleVisBtn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
         });
     }
 
@@ -741,7 +759,11 @@ async function handleAnalyze() {
 
     } catch (error) {
         console.error(error);
-        showError(error.message);
+        let msg = error.message;
+        if (msg.includes('API key not valid') || msg.includes('load failed') || msg.includes('403')) {
+            msg += '\n(Tip: 구글 클라우드 콘솔에서 IP 제한이나 리퍼러 제한을 확인하세요. 모바일 데이터는 IP가 다를 수 있습니다.)';
+        }
+        showError(msg);
     } finally {
         setLoading(false);
     }
