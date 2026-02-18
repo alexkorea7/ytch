@@ -12,14 +12,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css?v=layout_final_fix">
+    <link rel="stylesheet" href="style.css?v=layout_restore_1200_7">
 </head>
 
 <body>
     <div class="app-container">
         <!-- Header -->
         <header class="header">
-            <div class="header-inner">
+            <div class="header-inner app-container">
                 <div class="logo" onclick="resetToHome()" style="cursor: pointer;">
                     <i data-lucide="bar-chart-2" class="brand-icon"></i>
                     <h1>Youtube Channel Analyzer</h1>
@@ -39,28 +39,26 @@
                             <i data-lucide="plus"></i>
                         </button>
 
-                        <!-- Moved API Key Button (Header) -->
-                        <div class="api-key-header-wrapper" style="position: relative;">
-                            <button id="toggle-api-key-btn" class="social-btn" title="API Key 설정">
-                                <i data-lucide="key"></i>
-                            </button>
-                            <!-- Mobile Drawer / Desktop Dropdown -->
-                            <div id="api-key-container" class="api-key-dropdown hidden">
-                                <div class="api-key-inner">
-                                    <input type="password" id="api-key-input" placeholder="API Key 입력" />
-                                    <button id="save-api-key" class="btn btn-primary btn-sm">저장</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- API Key Button (Trigger) -->
+                        <button id="toggle-api-key-btn" class="social-btn" title="API Key 설정">
+                            <i data-lucide="key"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-            <!-- Old Settings Group Removed -->
+    </div>
+
+    <!-- API Key Drawer (Full Width) -->
+    <div id="api-key-container" class="api-key-drawer hidden">
+        <div class="api-key-inner">
+            <input type="password" id="api-key-input" placeholder="API Key 입력" />
+            <button id="save-api-key" class="btn btn-primary btn-sm">저장</button>
+        </div>
     </div>
     </header>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content app-container">
         <!-- Search Section -->
         <section class="search-section">
             <div class="search-bar-wrapper">

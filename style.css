@@ -1705,77 +1705,123 @@ input:focus {
         order: 2;
         width: auto !important;
     }
+}
 
-    /* 2. Settings Buttons: Flexible Alignment (Fix for clipping) */
-    .settings-group {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 0.25rem !important;
-        width: 100% !important;
-        height: auto !important;
-        /* Allow growing */
-        min-height: 40px !important;
-        margin: 0.25rem 0 !important;
-        overflow: visible !important;
-        /* Critical: Stop clipping */
-        padding: 2px 0 !important;
-        /* Buffer for shadows/borders */
+/* =========================================
+   NEW LAYOUT STYLES (Header API + Footer Settings)
+   ========================================= */
+
+/* Header API Key Button */
+.api-key-header-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* API Key Drawer (Full Width) */
+.api-key-drawer {
+    width: 100%;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    animation: slideDown 0.3s ease-out;
+}
+
+.api-key-drawer.hidden {
+    display: none;
+}
+
+.api-key-inner {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 400px;
+    /* Limit width */
+    margin: 0 auto;
+}
+
+.api-key-inner input {
+    flex: 1;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
     }
 
-    /* Wrapper for API Key Button */
-    .api-key-wrapper {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        width: auto !important;
-        height: auto !important;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Footer Settings Section */
+.app-footer {
+    border-top: 1px solid var(--border-color);
+    /* Match header border */
+    margin-top: 3rem;
+    padding: 2rem 0;
+    width: 100%;
+    text-align: center;
+    background: transparent;
+}
+
+.footer-divider {
+    /* Divider is now the border-top of app-footer, 
+       but if we want a smaller centered line: */
+    display: none;
+    /* using border-top instead */
+}
+
+.settings-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    align-items: center;
+}
+
+.desktop-label {
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Mobile Adjustments for New Layout */
+@media (max-width: 768px) {
+    .header-inner {
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
 
-    /* Unified Button Styles */
-    .settings-group>.btn,
-    .api-key-wrapper .btn {
-        width: auto !important;
-        min-width: 36px !important;
-        height: 36px !important;
-        min-height: 36px !important;
-        padding: 0 0.5rem !important;
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: normal !important;
-        box-sizing: border-box !important;
-        border-radius: 4px !important;
-        transform: none !important;
-        /* Reset visual hacks */
+    .social-links {
+        height: auto;
+        overflow: visible;
+        flex-wrap: wrap;
     }
 
-    /* Reset specific button positioning */
-    .api-key-wrapper .btn {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+    /* API Key Drawer on Mobile */
+    .api-key-drawer {
+        padding: 0.8rem;
     }
 
-    /* 3. Show API Key Text */
-    .desktop-text {
-        display: inline-block !important;
-        font-size: 0.85rem !important;
-        margin-left: 0.3rem !important;
-        white-space: nowrap !important;
+    /* Footer adjustments */
+    .settings-buttons {
+        gap: 0.5rem;
     }
 
-    /* 4. Icon Sizing */
-    .btn i,
-    .btn svg {
-        margin: 0 !important;
-        width: 18px !important;
-        height: 18px !important;
-        display: block !important;
+    .search-bar-wrapper {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .search-bar-wrapper input#channel-url-input {
+        width: 100%;
+        border-radius: 0;
+        -webkit-appearance: none;
     }
 }
