@@ -1759,17 +1759,22 @@ input:focus {
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
-        width: 40px !important;
-        height: 32px !important;
+        width: auto !important;
+        /* Flexible width */
+        height: 34px !important;
+        /* Fixed height */
     }
 
-    /* Force all 3 buttons (Upload, Download, API Key) to be identical squares */
+    /* Force height consistency but allow width to adapt */
     .settings-group>.btn,
     .api-key-wrapper .btn {
-        width: 40px !important;
-        height: 32px !important;
-        min-height: 32px !important;
-        padding: 0 !important;
+        width: auto !important;
+        min-width: 34px !important;
+        /* Minimum square size for icons */
+        height: 34px !important;
+        min-height: 34px !important;
+        padding: 0 0.5rem !important;
+        /* Add padding for text */
         margin: 0 !important;
         display: flex !important;
         align-items: center !important;
@@ -1779,9 +1784,11 @@ input:focus {
         border-radius: 4px !important;
     }
 
-    /* 3. Hide Text in API Key Button */
+    /* 3. Show API Key Text */
     .desktop-text {
-        display: none !important;
+        display: inline-block !important;
+        font-size: 0.85rem !important;
+        margin-left: 0.3rem !important;
     }
 
     /* 4. Icon Sizing */
